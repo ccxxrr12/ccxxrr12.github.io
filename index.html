@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apple风格博客</title>
+    <link rel="stylesheet" href="/assets/css/base/reset.css">
+    <link rel="stylesheet" href="/assets/css/base/typography.css">
+    <link rel="stylesheet" href="/assets/css/components/navbar.css">
+    <link rel="stylesheet" href="/assets/css/components/cards.css">
+    <link rel="stylesheet" href="/assets/css/components/buttons.css">
+    <style>
+        :root {
+            --primary: #0071e3;
+            --primary-light: #2997ff;
+            --bg-light: #fafdff;
+            --bg-gradient: linear-gradient(135deg, #fafdff 0%, #e3f0ff 100%);
+            --card-bg: linear-gradient(135deg, #fff 60%, #f5f6fa 100%);
+        }
+        
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            padding-top: 80px;
+        }
+        
+        .hero {
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 10%;
+            margin-bottom: 96px;
+        }
+        
+        .featured-posts {
+            max-width: 1200px;
+            margin: 0 auto 120px;
+            padding: 0 24px;
+        }
+        
+        .posts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 48px;
+            margin-top: 64px;
+        }
+        
+        footer {
+            padding: 48px 24px;
+            text-align: center;
+            color: #86868b;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">AppleBlog</div>
+        <ul class="nav-links">
+            <li><a href="/">首页</a></li>
+            <li><a href="/pages/blog/index.html">博客</a></li>
+            <li><a href="/pages/about.html">关于</a></li>
+        </ul>
+    </nav>
+    
+    <section class="hero">
+        <div>
+            <h1>创造非凡体验</h1>
+            <p>探索技术与设计的完美融合</p>
+            <a href="/pages/blog/index.html" class="apple-button">浏览文章</a>
+        </div>
+    </section>
+    
+    <section class="featured-posts">
+        <h2>精选文章</h2>
+        <div class="posts-grid">
+            <article class="post-card fade-in-up">
+                <img src="/assets/images/backgrounds/post-1.jpg" alt="文章配图">
+                <div class="card-content">
+                    <h3>前端设计的未来趋势</h3>
+                    <p>探索2025年最具影响力的设计语言与交互模式...</p>
+                    <a href="/pages/blog/post.html" class="apple-button">阅读更多</a>
+                </div>
+            </article>
+            
+            <article class="post-card fade-in-up">
+                <img src="/assets/images/backgrounds/post-2.jpg" alt="文章配图">
+                <div class="card-content">
+                    <h3>CSS毛玻璃效果实现</h3>
+                    <p>使用现代CSS技术创建苹果风格的磨砂玻璃效果...</p>
+                    <a href="/pages/blog/post.html" class="apple-button">阅读更多</a>
+                </div>
+            </article>
+            
+            <article class="post-card fade-in-up">
+                <img src="/assets/images/backgrounds/post-3.jpg" alt="文章配图">
+                <div class="card-content">
+                    <h3>响应式设计最佳实践</h3>
+                    <p>构建在各种设备上都能完美展示的现代网站...</p>
+                    <a href="/pages/blog/post.html" class="apple-button">阅读更多</a>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2025 Apple风格博客 | 设计与开发</p>
+    </footer>
+
+    <script src="/assets/js/modules/intersection.js"></script>
+    <script src="/assets/js/main.js"></script>
+</body>
+</html>

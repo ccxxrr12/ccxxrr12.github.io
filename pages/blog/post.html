@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章标题 | Apple风格博客</title>
+    <link rel="stylesheet" href="/assets/css/base/reset.css">
+    <link rel="stylesheet" href="/assets/css/base/typography.css">
+    <link rel="stylesheet" href="/assets/css/components/navbar.css">
+    <link rel="stylesheet" href="/assets/css/components/cards.css">
+    <link rel="stylesheet" href="/assets/css/components/buttons.css">
+    <style>
+        :root {
+            --primary: #0071e3;
+            --primary-light: #2997ff;
+            --bg-light: #fafdff;
+            --bg-gradient: linear-gradient(135deg, #fafdff 0%, #e3f0ff 100%);
+        }
+        
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            padding-top: 80px;
+        }
+        
+        .post-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 24px 120px;
+        }
+        
+        .post-header {
+            margin-bottom: 64px;
+            text-align: center;
+        }
+        
+        .post-meta {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            color: #86868b;
+            margin-top: 24px;
+        }
+        
+        .post-image {
+            border-radius: 32px;
+            overflow: hidden;
+            margin: 48px 0;
+            box-shadow: 0 24px 48px rgba(0, 113, 227, 0.15);
+        }
+        
+        .post-image img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .post-content {
+            line-height: 1.8;
+        }
+        
+        .post-content h2 {
+            margin-top: 64px;
+            margin-bottom: 24px;
+        }
+        
+        .post-content p {
+            margin-bottom: 32px;
+        }
+        
+        .post-content blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 24px;
+            margin: 40px 0;
+            font-style: italic;
+            color: #515154;
+        }
+        
+        .post-content code {
+            background: rgba(0, 113, 227, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .post-content pre {
+            background: #1d1d1f;
+            color: #f5f5f7;
+            padding: 24px;
+            border-radius: 16px;
+            overflow-x: auto;
+            margin: 32px 0;
+        }
+        
+        .author-card {
+            background: linear-gradient(135deg, #fff 60%, #f5f6fa 100%);
+            border-radius: 32px;
+            padding: 32px;
+            display: flex;
+            gap: 32px;
+            align-items: center;
+            margin: 96px 0;
+        }
+        
+        .author-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+        
+        .author-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .related-posts {
+            margin-top: 96px;
+        }
+        
+        .related-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 32px;
+            margin-top: 48px;
+        }
+        
+        footer {
+            padding: 48px 24px;
+            text-align: center;
+            color: #86868b;
+            border-top: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        @media (max-width: 768px) {
+            .author-card {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">AppleBlog</div>
+        <ul class="nav-links">
+            <li><a href="/">首页</a></li>
+            <li><a href="/pages/blog/index.html">博客</a></li>
+            <li><a href="/pages/about.html">关于</a></li>
+        </ul>
+    </nav>
+    
+    <div class="post-container">
+        <div class="post-header fade-in-up">
+            <span class="post-category">设计</span>
+            <h1>前端设计的未来趋势</h1>
+            <p>探索2025年最具影响力的设计语言与交互模式</p>
+            <div class="post-meta">
+                <span>2025年8月12日</span>
+                <span>·</span>
+                <span>10分钟阅读</span>
+            </div>
+        </div>
+        
+        <div class="post-image fade-in-up">
+            <img src="/assets/images/backgrounds/post-1.jpg" alt="文章配图">
+        </div>
+        
+        <div class="post-content">
+            <p>在快速发展的数字世界中，前端设计正经历着前所未有的变革。2025年，我们将见证一系列创新趋势重塑用户体验，从增强现实到人工智能驱动的界面，从玻璃拟态到情感化设计。</p>
+            
+            <h2>1. 玻璃拟态与深度感</h2>
+            <p>苹果风格的毛玻璃效果将继续引领设计潮流。通过<code>backdrop-filter: blur()</code>实现的半透明效果不仅美观，还能创造层次感和视觉深度。</p>
+            
+            <pre><code>.glass-panel {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+}</code></pre>
+            
+            <p>这种设计语言不仅限于导航栏，正扩展到卡片、模态框甚至整个界面区域，创造出类似物理世界的材质感。</p>
+            
+            <h2>2. 微交互与情感化设计</h2>
+            <p>2025年的设计将更加注重情感连接。微小的动画和交互反馈，如按钮悬停效果、加载动画和状态转换，将变得更加精致和个性化。</p>
+            
+            <blockquote>"设计不只是外观和感觉。设计是它如何工作。" — Steve Jobs</blockquote>
+            
+            <p>这些微交互不仅增强用户体验，还能传达品牌个性，建立情感连接。例如，当用户完成一项任务时，一个精心设计的庆祝动画可以带来成就感和愉悦。</p>
+            
+            <div class="post-image fade-in-up">
+                <img src="/assets/images/backgrounds/post-detail.jpg" alt="交互设计示意图">
+            </div>
+            
+            <h2>3. 增强现实(AR)集成</h2>
+            <p>随着WebXR技术的成熟，前端设计将越来越多地融入AR元素。从产品可视化到互动式教程，AR将为用户提供沉浸式体验。</p>
+            
+            <p>设计师需要考虑如何在2D界面中无缝集成3D元素，以及如何设计直观的AR交互模式。苹果的空间计算设备将加速这一趋势的发展。</p>
+            
+            <h2>4. 人工智能驱动的界面</h2>
+            <p>AI将从前端设计的辅助工具转变为核心组件。我们将看到更多：</p>
+            <ul>
+                <li>自适应界面：根据用户行为和偏好自动调整布局</li>
+                <li>预测性交互：预判用户需求并提供相关选项</li>
+                <li>自然语言界面：语音和文本交互变得更加自然</li>
+                <li>自动生成内容：AI辅助的内容创建和个性化</li>
+            </ul>
+            
+            <p>这些趋势共同指向一个更智能、更直观、更情感化的数字未来。作为设计师和开发者，我们需要平衡技术创新与用户体验，创造既美观又实用的界面。</p>
+        </div>
+        
+        <div class="author-card fade-in-up">
+            <div class="author-image">
+                <img src="/assets/images/backgrounds/author.jpg" alt="作者头像">
+            </div>
+            <div class="author-info">
+                <h3>张设计</h3>
+                <p>资深UI/UX设计师，专注于创造直观优雅的用户体验。拥有8年设计经验，曾为多家科技公司设计产品界面。</p>
+                <a href="/pages/about.html" class="apple-button">查看个人资料</a>
+            </div>
+        </div>
+        
+        <div class="related-posts">
+            <h2>相关文章</h2>
+            <div class="related-grid">
+                <article class="post-card fade-in-up">
+                    <img src="/assets/images/backgrounds/post-2.jpg" alt="文章配图">
+                    <div class="card-content">
+                        <h3>CSS毛玻璃效果实现</h3>
+                        <p>使用现代CSS技术创建苹果风格的磨砂玻璃效果...</p>
+                        <a href="/pages/blog/post.html" class="apple-button">阅读更多</a>
+                    </div>
+                </article>
+                
+                <article class="post-card fade-in-up">
+                    <img src="/assets/images/backgrounds/post-5.jpg" alt="文章配图">
+                    <div class="card-content">
+                        <h3>色彩心理学在UI中的应用</h3>
+                        <p>如何通过色彩选择影响用户行为和情感...</p>
+                        <a href="/pages/blog/post.html" class="apple-button">阅读更多</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 Apple风格博客 | 设计与开发</p>
+    </footer>
+
+    <script src="/assets/js/modules/intersection.js"></script>
+    <script src="/assets/js/main.js"></script>
+</body>
+</html>
