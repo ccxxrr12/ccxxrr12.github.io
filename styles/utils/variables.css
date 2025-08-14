@@ -1,0 +1,14 @@
+:root {
+    --primary-blue: #0071E3;
+    --light-blue: #E6F1FA;
+    --dark-gray: #1C1C1E;
+    --mid-gray: #8E8E93;
+    --light-gray: #F2F2F7;
+    --white: #FFFFFF;
+    --card-shadow: 0px 4px 16px rgba(0, 0, 0, 0.08);
+    --transition: all 0.4s cubic-bezier(0.28, 0.44, 0.32, 1);
+    --card-radius: 20px;
+    --navbar-height: 80px;
+    --avatar-size: 52px;
+    --like-color: #ff375f;
+}

@@ -3,113 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apple风格博客</title>
-    <link rel="stylesheet" href="/assets/css/base/reset.css">
-    <link rel="stylesheet" href="/assets/css/base/typography.css">
-    <link rel="stylesheet" href="/assets/css/components/navbar.css">
-    <link rel="stylesheet" href="/assets/css/components/cards.css">
-    <link rel="stylesheet" href="/assets/css/components/buttons.css">
+    <title>TechLife · 我的技术日志</title>
+    <link rel="stylesheet" href="styles/utils/variables.css">
+    <link rel="stylesheet" href="styles/utils/animations.css">
+    <link rel="stylesheet" href="styles/components/post-card.css">
+    <link rel="stylesheet" href="styles/components/media-gallery.css">
+    <link rel="stylesheet" href="styles/main.css">
     <style>
+        /* 内联部分CSS变量确保基本样式 */
         :root {
-            --primary: #0071e3;
-            --primary-light: #2997ff;
-            --bg-light: #fafdff;
-            --bg-gradient: linear-gradient(135deg, #fafdff 0%, #e3f0ff 100%);
-            --card-bg: linear-gradient(135deg, #fff 60%, #f5f6fa 100%);
-        }
-        
-        body {
-            background: var(--bg-gradient);
-            min-height: 100vh;
-            padding-top: 80px;
-        }
-        
-        .hero {
-            min-height: 90vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 0 10%;
-            margin-bottom: 96px;
-        }
-        
-        .featured-posts {
-            max-width: 1200px;
-            margin: 0 auto 120px;
-            padding: 0 24px;
-        }
-        
-        .posts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 48px;
-            margin-top: 64px;
-        }
-        
-        footer {
-            padding: 48px 24px;
-            text-align: center;
-            color: #86868b;
-            border-top: 1px solid rgba(0,0,0,0.05);
+            --primary-blue: #0071E3;
+            --light-blue: #E6F1FA;
+            --dark-gray: #1C1C1E;
+            --mid-gray: #8E8E93;
+            --light-gray: #F2F2F7;
+            --white: #FFFFFF;
+            --card-shadow: 0px 4px 16px rgba(0, 0, 0, 0.08);
+            --transition: all 0.4s cubic-bezier(0.28, 0.44, 0.32, 1);
+            --card-radius: 20px;
+            --navbar-height: 80px;
         }
     </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="logo">AppleBlog</div>
-        <ul class="nav-links">
-            <li><a href="/">首页</a></li>
-            <li><a href="/pages/blog/index.html">博客</a></li>
-            <li><a href="/pages/about.html">关于</a></li>
-        </ul>
-    </nav>
-    
-    <section class="hero">
-        <div>
-            <h1>创造非凡体验</h1>
-            <p>探索技术与设计的完美融合</p>
-            <a href="/pages/blog/index.html" class="apple-button">浏览文章</a>
+    <!-- 导航栏 -->
+    <header class="glass-nav">
+        <div class="logo">
+            <div class="logo-icon">T</div>
+            <span>TechLife</span>
         </div>
-    </section>
-    
-    <section class="featured-posts">
-        <h2>精选文章</h2>
-        <div class="posts-grid">
-            <article class="post-card fade-in-up">
-                <img src="/assets/images/backgrounds/post-1.jpg" alt="文章配图">
-                <div class="card-content">
-                    <h3>前端设计的未来趋势</h3>
-                    <p>探索2025年最具影响力的设计语言与交互模式...</p>
-                    <a href="/pages/blog/post.html" class="apple-button">阅读更多</a>
-                </div>
-            </article>
-            
-            <article class="post-card fade-in-up">
-                <img src="/assets/images/backgrounds/post-2.jpg" alt="文章配图">
-                <div class="card-content">
-                    <h3>CSS毛玻璃效果实现</h3>
-                    <p>使用现代CSS技术创建苹果风格的磨砂玻璃效果...</p>
-                    <a href="/pages/blog/post.html" class="apple-button">阅读更多</a>
-                </div>
-            </article>
-            
-            <article class="post-card fade-in-up">
-                <img src="/assets/images/backgrounds/post-3.jpg" alt="文章配图">
-                <div class="card-content">
-                    <h3>响应式设计最佳实践</h3>
-                    <p>构建在各种设备上都能完美展示的现代网站...</p>
-                    <a href="/pages/blog/post.html" class="apple-button">阅读更多</a>
-                </div>
-            </article>
+        <div class="nav-items">
+            <div class="nav-item active">首页</div>
+            <div class="nav-item">技术</div>
+            <div class="nav-item">生活</div>
+            <div class="nav-item">项目</div>
         </div>
-    </section>
+        <div class="search-container">
+            <i class="search-icon">🔍</i>
+            <input type="text" placeholder="搜索动态..." class="search-input">
+        </div>
+    </header>
 
-    <footer>
-        <p>© 2025 Apple风格博客 | 设计与开发</p>
-    </footer>
+    <!-- 主内容区 -->
+    <main class="content-container">
+        <!-- 卡片1：纯文本动态 -->
+        <div class="post-card">
+            <div class="post-header">
+                <div class="avatar">
+                    <div class="avatar-initial">L</div>
+                </div>
+                <div class="post-author-info">
+                    <div class="post-author">刘明</div>
+                    <div class="post-meta">
+                        <span class="post-time">3小时前</span>
+                        <span class="post-location">深圳</span>
+                    </div>
+                </div>
+            </div>
+            <div class="post-content">
+                今天终于解决了React性能优化的问题！通过对组件进行memo化、使用useCallback避免不必要的重新渲染，以及采用虚拟滚动技术，页面性能提升了300%。在技术路上，持续探索永无止境。
+            </div>
+            <div class="post-actions">
+                <div class="action-btn like-btn">
+                    <div class="like-icon"></div>
+                    <span>32</span>
+                </div>
+                <div class="action-btn">
+                    <div class="comment-icon"></div>
+                    <span>评论</span>
+                </div>
+                <div class="action-btn">
+                    <div class="share-icon"></div>
+                    <span>分享</span>
+                </div>
+            </div>
+        </div>
 
-    <script src="/assets/js/modules/intersection.js"></script>
-    <script src="/assets/js/main.js"></script>
+        <!-- 卡片2：包含图片的动态 -->
+        <div class="post-card">
+            <div class="post-header">
+                <div class="avatar">
+                    <div class="avatar-initial">W</div>
+                </div>
+                <div class="post-author-info">
+                    <div class="post-author">王倩</div>
+                    <div class="post-meta">
+                        <span class="post-time">昨天</span>
+                        <span class="post-location">北京</span>
+                    </div>
+                </div>
+            </div>
+            <div class="post-content">
+                周末完成的个人项目首页设计，采用了简约的科技风格。灵感来源于苹果的设计哲学，注重留白与细节的处理。设计文件已开源在GitHub。
+            </div>
+            <div class="post-media">
+                <div class="media-item" style="background-image: url('assets/images/placeholder/1.jpg')"></div>
+            </div>
+            <div class="post-actions">
+                <div class="action-btn like-btn">
+                    <div class="like-icon"></div>
+                    <span>54</span>
+                </div>
+                <div class="action-btn">
+                    <div class="comment-icon"></div>
+                    <span>评论</span>
+                </div>
+                <div class="action-btn">
+                    <div class="share-icon"></div>
+                    <span>分享</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 卡片3：多图动态 -->
+        <div class="post-card">
+            <div class="post-header">
+                <div class="avatar">
+                    <div class="avatar-initial">Z</div>
+                </div>
+                <div class="post-author-info">
+                    <div class="post-author">张涛</div>
+                    <div class="post-meta">
+                        <span class="post-time">2天前</span>
+                        <span class="post-location">杭州</span>
+                    </div>
+                </div>
+            </div>
+            <div class="post-content">
+                前端开发者大会精彩瞬间，分享了许多新技术和实践案例。特别推荐WebAssembly在性能优化中的应用，以及未来Web开发的趋势探索。
+            </div>
+            <div class="post-media media-grid">
+                <div class="media-item" style="background-image: url('assets/images/placeholder/1.jpg')"></div>
+                <div class="media-item" style="background-image: url('assets/images/placeholder/2.jpg')"></div>
+                <div class="media-item" style="background-image: url('assets/images/placeholder/3.jpg')"></div>
+            </div>
+            <div class="post-actions">
+                <div class="action-btn like-btn liked">
+                    <div class="like-icon"></div>
+                    <span>128</span>
+                </div>
+                <div class="action-btn">
+                    <div class="comment-icon"></div>
+                    <span>评论</span>
+                </div>
+                <div class="action-btn">
+                    <div class="share-icon"></div>
+                    <span>分享</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 新建动态按钮 -->
+    <div class="new-post-button">
+        <div class="plus-icon">+</div>
+    </div>
+
+    <!-- 引入JavaScript文件 -->
+    <script src="scripts/components/postCard.js"></script>
+    <script src="scripts/components/mediaViewer.js"></script>
+    <script src="scripts/main.js"></script>
 </body>
 </html>
