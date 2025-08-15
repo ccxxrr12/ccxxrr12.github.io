@@ -71,12 +71,7 @@
                 border-right: 0.15em solid #5C6370;
                 animation: blink 0.7s infinite;
             }
-            .tag-active {
-                @apply bg-editor text-white border-b-2 border-primary;
-            }
-            .tag-inactive {
-                @apply bg-darker/70 text-comment hover:text-white transition-all duration-200;
-            }
+            /* .tag-active and .tag-inactive are now handled with utility classes in the HTML directly */
         }
     </style>
 </head>
@@ -120,15 +115,15 @@
                 </div>
                 <div class="px-4 py-2 tag-inactive text-sm">
                     <i class="fa fa-file-text-o mr-1"></i>README.md
+                <div class="px-4 py-2 bg-editor text-white border-b-2 border-primary text-sm">
+                    <i class="fa fa-file-code-o mr-1"></i>geek-profile-card.js
                 </div>
-                <div class="px-4 py-2 tag-inactive text-sm">
+                <div class="px-4 py-2 bg-darker/70 text-comment hover:text-white transition-all duration-200 text-sm">
+                    <i class="fa fa-file-text-o mr-1"></i>README.md
+                </div>
+                <div class="px-4 py-2 bg-darker/70 text-comment hover:text-white transition-all duration-200 text-sm">
                     <i class="fa fa-cog mr-1"></i>config.json
                 </div>
-            </div>
-
-            <!-- Code Area -->
-            <div class="bg-editor p-4 overflow-x-auto max-h-[70vh]">
-                <pre class="text-sm md:text-base leading-relaxed"><span class="text-comment">/**
  * Profile Card Configuration
  * 
  * This module exports a JavaScript object containing personal information
