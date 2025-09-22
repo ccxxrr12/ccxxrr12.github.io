@@ -1,339 +1,562 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Geek Profile Card</title>
+    <title>吸烟者问题演示模型</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义颜色和字体 -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#61AFEF',
-                        secondary: '#98C379',
-                        accent: '#C678DD',
-                        warning: '#E5C07B',
-                        error: '#E06C75',
-                        dark: '#282C34',
-                        darker: '#1E2127',
-                        editor: '#21252B',
-                        comment: '#5C6370',
-                        keyword: '#C678DD',
-                        string: '#98C379',
-                        number: '#D19A66',
-                        variable: '#E06C75',
-                        function: '#61AFEF',
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        smokerA: '#EF4444',
+                        smokerB: '#8B5CF6',
+                        smokerC: '#EC4899',
+                        agent: '#6366F1',
+                        table: '#D1D5DB'
                     },
                     fontFamily: {
-                        code: ['Fira Code', 'Consolas', 'Monaco', 'monospace'],
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
                     },
-                    animation: {
-                        'typing': 'typing 3.5s steps(40, end)',
-                        'blink': 'blink .7s infinite',
-                        'float': 'float 6s ease-in-out infinite',
-                    },
-                    keyframes: {
-                        typing: {
-                            'from': { width: '0' },
-                            'to': { width: '100%' },
-                        },
-                        blink: {
-                            'from, to': { borderColor: 'transparent' },
-                            '50%': { borderColor: '#5C6370' },
-                        },
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-20px)' },
-                        }
-                    }
-                },
+                }
             }
         }
     </script>
+    
     <style type="text/tailwindcss">
         @layer utilities {
             .content-auto {
                 content-visibility: auto;
             }
-            .text-shadow {
-                text-shadow: 0 0 10px rgba(97, 175, 239, 0.5);
+            .resource-appear {
+                animation: resourceAppear 0.5s ease-out forwards;
             }
-            .bg-glass {
-                background: rgba(30, 33, 39, 0.8);
-                backdrop-filter: blur(10px);
+            .smoker-active {
+                animation: smokerPulse 1.5s infinite;
             }
-            .typing-container {
-                display: inline-block;
+            .floating {
+                animation: floating 3s ease-in-out infinite;
             }
-            .cursor {
-                border-right: 0.15em solid #5C6370;
-                animation: blink 0.7s infinite;
+            .transfer {
+                animation: transfer 1s ease-in-out forwards;
             }
-            /* .tag-active and .tag-inactive are now handled with utility classes in the HTML directly */
+        }
+        
+        @keyframes resourceAppear {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes smokerPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 0 25px rgba(59, 130, 246, 0.8); }
+        }
+        
+        @keyframes floating {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        @keyframes transfer {
+            0% { transform: translateX(0) translateY(0); opacity: 1; }
+            100% { transform: translateX(var(--tx)) translateY(var(--ty)); opacity: 0; }
         }
     </style>
 </head>
-<body class="bg-darker min-h-screen flex items-center justify-center p-4 font-code text-gray-200">
-    <!-- Floating background elements -->
-    <div class="fixed inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute top-[10%] left-[5%] w-64 h-64 bg-primary/10 rounded-full filter blur-3xl animate-float" style="animation-delay: 0s;"></div>
-        <div class="absolute top-[30%] right-[10%] w-80 h-80 bg-accent/10 rounded-full filter blur-3xl animate-float" style="animation-delay: 2s;"></div>
-        <div class="absolute bottom-[20%] left-[20%] w-72 h-72 bg-secondary/10 rounded-full filter blur-3xl animate-float" style="animation-delay: 4s;"></div>
-    </div>
-
-    <!-- Card Container -->
-    <div class="w-full max-w-4xl relative z-10">
-        <!-- Editor Window -->
-        <div class="bg-glass rounded-lg shadow-2xl overflow-hidden border border-gray-700/50">
-            <!-- Window Controls -->
-            <div class="flex items-center justify-between bg-darker px-4 py-2 border-b border-gray-700/50">
-                <div class="flex space-x-2">
-                    <div class="w-3 h-3 rounded-full bg-error"></div>
-                    <div class="w-3 h-3 rounded-full bg-warning"></div>
-                    <div class="w-3 h-3 rounded-full bg-secondary"></div>
-                </div>
-                <div class="text-xs text-gray-400">geek-profile-card.js</div>
-                <div class="flex space-x-1">
-                    <div class="w-6 h-6 flex items-center justify-center text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 rounded transition-colors">
-                        <i class="fa fa-window-minimize"></i>
-                    </div>
-                    <div class="w-6 h-6 flex items-center justify-center text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 rounded transition-colors">
-                        <i class="fa fa-window-maximize"></i>
-                    </div>
-                    <div class="w-6 h-6 flex items-center justify-center text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 rounded transition-colors">
-                        <i class="fa fa-times"></i>
-                    </div>
-                </div>
+<body class="bg-gray-100 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- 标题部分 -->
+        <header class="text-center mb-10">
+            <h1 class="text-[clamp(1.8rem,5vw,3rem)] font-bold text-gray-800 mb-3">吸烟者问题演示模型</h1>
+            <p class="text-gray-600 max-w-3xl mx-auto">经典的进程同步与互斥问题模拟，展示代理人与吸烟者之间的资源交互过程</p>
+        </header>
+        
+        <!-- 控制面板 -->
+        <div class="flex flex-wrap justify-center gap-4 mb-8 p-4 bg-white rounded-xl shadow-md">
+            <button id="startBtn" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2">
+                <i class="fa fa-play"></i> 开始模拟
+            </button>
+            <button id="stepBtn" class="px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 transition-all flex items-center gap-2">
+                <i class="fa fa-step-forward"></i> 单步执行
+            </button>
+            <button id="resetBtn" class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all flex items-center gap-2">
+                <i class="fa fa-refresh"></i> 重置
+            </button>
+            <button id="speedBtn" class="px-6 py-3 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-all flex items-center gap-2">
+                <i class="fa fa-tachometer"></i> 速度: <span id="speedText">中等</span>
+            </button>
+        </div>
+        
+        <!-- 状态信息 -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-2">当前状态</h2>
+            <div id="statusText" class="text-gray-700 min-h-[40px]">
+                准备就绪，请点击"开始模拟"或"单步执行"
             </div>
-
-            <!-- Tabs -->
-            <div class="flex border-b border-gray-700/50">
-                <div class="px-4 py-2 tag-active text-sm">
-                    <i class="fa fa-file-code-o mr-1"></i>geek-profile-card.js
-                </div>
-                <div class="px-4 py-2 tag-inactive text-sm">
-                    <i class="fa fa-file-text-o mr-1"></i>README.md
-                <div class="px-4 py-2 bg-editor text-white border-b-2 border-primary text-sm">
-                    <i class="fa fa-file-code-o mr-1"></i>geek-profile-card.js
-                </div>
-                <div class="px-4 py-2 bg-darker/70 text-comment hover:text-white transition-all duration-200 text-sm">
-                    <i class="fa fa-file-text-o mr-1"></i>README.md
-                </div>
-                <div class="px-4 py-2 bg-darker/70 text-comment hover:text-white transition-all duration-200 text-sm">
-                    <i class="fa fa-cog mr-1"></i>config.json
-                </div>
- * Profile Card Configuration
- * 
- * This module exports a JavaScript object containing personal information
- * formatted as a developer profile. All sensitive information is encrypted
- * and should be accessed via the provided methods.
- */</span>
-
-<span class="text-keyword">const</span> <span class="text-variable">ProfileCard</span> = {
-  <span class="text-keyword">name</span>: <span class="text-string">'Sherry CHEN'</span>,
-  <span class="text-keyword">role</span>: <span class="text-string">'Senior Software Engineer'</span>,
-  <span class="text-keyword">specialization</span>: <span class="text-string">'Full Stack Development'</span>,
-  <span class="text-keyword">location</span>: <span class="text-string">'San Francisco, CA'</span>,
-  <span class="text-keyword">company</span>: <span class="text-string">'TechGiant Inc.'</span>,
-  
-  <span class="text-keyword">skills</span>: [
-    <span class="text-string">'JavaScript'</span>, <span class="text-string">'TypeScript'</span>, <span class="text-string">'React'</span>, <span class="text-string">'Node.js'</span>,
-    <span class="text-string">'AWS'</span>, <span class="text-string">'Docker'</span>, <span class="text-string">'Kubernetes'</span>, <span class="text-string">'PostgreSQL'</span>
-  ],
-  
-  <span class="text-keyword">languages</span>: [
-    <span class="text-string">'English'</span>, <span class="text-string">'Spanish'</span>, <span class="text-string">'Japanese'</span>
-  ],
-  
-  <span class="text-keyword">contact</span>: {
-    <span class="text-comment">// Encrypted email - call getEmail() to decrypt</span>
-    <span class="text-keyword">email</span>: <span class="text-string">'aW5mb0BhbGV4am9obnNvbi5jb20='</span>,
-    
-    <span class="text-comment">// Encrypted phone - call getPhone() to decrypt</span>
-    <span class="text-keyword">phone</span>: <span class="text-string">'NTMwLTEyMy00NTY3'</span>,
-    
-    <span class="text-comment">// Social media profiles</span>
-    <span class="text-keyword">social</span>: {
-      <span class="text-string">'linkedin'</span>: <span class="text-string">'SherryCHEN'</span>,
-      <span class="text-string">'github'</span>: <span class="text-string">'Sherryj-dev'</span>,
-      <span class="text-string">'twitter'</span>: <span class="text-string">'@Sherryj_code'</span>,
-      <span class="text-string">'dribbble'</span>: <span class="text-string">'Sherry_designs'</span>
-    }
-  },
-  
-  <span class="text-comment">/**
-   * Get decrypted email address
-   * @returns {string} Decrypted email
-   */</span>
-  <span class="text-function">getEmail</span>() {
-    <span class="text-keyword">return</span> <span class="text-variable">atob</span>(<span class="text-keyword">this</span>.contact.email);
-  },
-  
-  <span class="text-comment">/**
-   * Get decrypted phone number
-   * @returns {string} Decrypted phone number
-   */</span>
-  <span class="text-function">getPhone</span>() {
-    <span class="text-keyword">return</span> <span class="text-variable">atob</span>(<span class="text-keyword">this</span>.contact.phone);
-  },
-  
-  <span class="text-comment">/**
-   * Get social media profile URL
-   * @param {string} platform - Social media platform
-   * @returns {string} Profile URL
-   */</span>
-  <span class="text-function">getSocialProfile</span>(<span class="text-variable">platform</span>) {
-    <span class="text-keyword">const</span> <span class="text-variable">platforms</span> = {
-      <span class="text-string">'linkedin'</span>: <span class="text-string">'https://linkedin.com/in/'</span>,
-      <span class="text-string">'github'</span>: <span class="text-string">'https://github.com/'</span>,
-      <span class="text-string">'twitter'</span>: <span class="text-string">'https://twitter.com/'</span>,
-      <span class="text-string">'dribbble'</span>: <span class="text-string">'https://dribbble.com/'</span>
-    };
-    
-    <span class="text-keyword">if</span> (<span class="text-variable">platforms</span>[<span class="text-variable">platform</span>]) {
-      <span class="text-keyword">return</span> <span class="text-variable">platforms</span>[<span class="text-variable">platform</span>] + <span class="text-keyword">this</span>.contact.social[<span class="text-variable">platform</span>];
-    }
-    
-    <span class="text-keyword">return</span> <span class="text-literal">null</span>;
-  },
-  
-  <span class="text-comment">/**
-   * Render contact section with animated typing effect
-   * @param {HTMLElement} target - Target element to render into
-   */</span>
-  <span class="text-function">renderContactInfo</span>(<span class="text-variable">target</span>) {
-    <span class="text-comment">// Implementation hidden for security reasons</span>
-    <span class="text-comment">// This would normally generate the contact section with animations</span>
-  }
-};
-
-<span class="text-comment">// Initialize and render contact information</span>
-<span class="text-variable">document</span>.readyState === <span class="text-string">'loading'</span> 
-  ? <span class="text-variable">document</span>.addEventListener(<span class="text-string">'DOMContentLoaded'</span>, () => <span class="text-variable">ProfileCard</span>.renderContactInfo(<span class="text-variable">document</span>.getElementById(<span class="text-string">'contact-info'</span>)))
-  : <span class="text-variable">ProfileCard</span>.renderContactInfo(<span class="text-variable">document</span>.getElementById(<span class="text-string">'contact-info'</span>));
-
-<span class="text-comment">// Export the profile for external use</span>
-<span class="text-keyword">export</span> <span class="text-keyword">default</span> <span class="text-variable">ProfileCard</span>;</pre>
-            </div>
-
-            <!-- Status Bar -->
-            <div class="bg-darker py-1 px-4 text-xs text-gray-400 flex justify-between items-center border-t border-gray-700/50">
-                <div class="flex items-center space-x-3">
-                    <div class="flex items-center">
-                        <i class="fa fa-git-branch mr-1"></i>
-                        <span>main</span>
-                    </div>
-                    <div class="flex items-center">
-                        <i class="fa fa-code-fork mr-1"></i>
-                        <span>v2.3.1</span>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <div class="flex items-center">
-                        <i class="fa fa-check-circle text-secondary mr-1"></i>
-                        <span>128 lines</span>
-                    </div>
-                    <div class="flex items-center">
-                        <i class="fa fa-file-code-o mr-1"></i>
-                        <span>JavaScript</span>
-                    </div>
-                </div>
+            <div class="mt-3 text-sm text-gray-500">
+                轮次: <span id="roundCounter" class="font-semibold">0</span>
             </div>
         </div>
-
-        <!-- Contact Info Overlay -->
-        <div id="contact-info" class="mt-6 bg-glass rounded-lg p-6 shadow-lg border border-gray-700/50 hidden">
-            <div class="flex flex-col md:flex-row gap-6">
-                <div class="flex-shrink-0">
-                    <div class="w-32 h-32 md:w-40 md:h-40 rounded-lg bg-primary/20 border-2 border-primary/50 overflow-hidden flex items-center justify-center">
-                        <div class="text-5xl text-primary">
-                            <i class="fa fa-user-circle-o"></i>
-                        </div>
+        
+        <!-- 主要模拟区域 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- 吸烟者A -->
+            <div id="smokerA" class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center transition-all duration-300">
+                <div class="w-20 h-20 rounded-full bg-smokerA/10 flex items-center justify-center mb-4 border-2 border-smokerA">
+                    <span class="text-3xl font-bold text-smokerA">A</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-3">吸烟者A</h3>
+                <p class="text-center text-gray-600 mb-4">拥有: 烟草<br>缺少: 纸、火柴</p>
+                
+                <div class="flex gap-3 mt-2">
+                    <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center border border-green-300">
+                        <i class="fa fa-leaf text-green-600"></i>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-300 opacity-50">
+                        <i class="fa fa-file-text-o text-gray-400"></i>
+                    </div>
+                    <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-300 opacity-50">
+                        <i class="fa fa-fire text-gray-400"></i>
                     </div>
                 </div>
-                <div class="flex-grow">
-                    <h2 class="text-2xl font-bold text-primary mb-1">Sherry CHEN</h2>
-                    <p class="text-lg text-gray-300 mb-3">Senior Software Engineer @ TechGiant Inc.</p>
-                    
-                    <div class="space-y-2 mb-4">
-                        <div class="flex items-center text-gray-300">
-                            <i class="fa fa-envelope-o text-primary w-6"></i>
-                            <a href="mailto:info@SherryCHEN.com" class="hover:text-primary transition-colors">info@SherryCHEN.com</a>
-                        </div>
-                        <div class="flex items-center text-gray-300">
-                            <i class="fa fa-phone text-primary w-6"></i>
-                            <a href="tel:530-123-4567" class="hover:text-primary transition-colors">530-123-4567</a>
-                        </div>
-                        <div class="flex items-center text-gray-300">
-                            <i class="fa fa-map-marker text-primary w-6"></i>
-                            <span>San Francisco, CA</span>
-                        </div>
-                    </div>
-                    
-                    <div class="flex space-x-3">
-                        <a href="https://linkedin.com/in/SherryCHEN" target="_blank" class="w-8 h-8 rounded-full bg-darker flex items-center justify-center text-gray-400 hover:text-primary hover:bg-dark transition-colors">
-                            <i class="fa fa-linkedin"></i>
-                        </a>
-                        <a href="https://github.com/Sherryj-dev" target="_blank" class="w-8 h-8 rounded-full bg-darker flex items-center justify-center text-gray-400 hover:text-primary hover:bg-dark transition-colors">
-                            <i class="fa fa-github"></i>
-                        </a>
-                        <a href="https://twitter.com/Sherryj_code" target="_blank" class="w-8 h-8 rounded-full bg-darker flex items-center justify-center text-gray-400 hover:text-primary hover:bg-dark transition-colors">
-                            <i class="fa fa-twitter"></i>
-                        </a>
-                        <a href="https://dribbble.com/Sherry_designs" target="_blank" class="w-8 h-8 rounded-full bg-darker flex items-center justify-center text-gray-400 hover:text-primary hover:bg-dark transition-colors">
-                            <i class="fa fa-dribbble"></i>
-                        </a>
-                    </div>
+                
+                <div class="mt-4 text-sm font-medium text-smokerA hidden" id="smokerAStatus">
+                    <i class="fa fa-smoking"></i> 正在吸烟...
                 </div>
             </div>
             
-            <div class="mt-6 pt-4 border-t border-gray-700/50">
-                <h3 class="text-lg font-semibold text-gray-300 mb-2">Skills & Expertise</h3>
-                <div class="flex flex-wrap gap-2">
-                    <span class="px-3 py-1 bg-dark rounded-full text-xs text-gray-300 border border-gray-700/50">JavaScript</span>
-                    <span class="px-3 py-1 bg-dark rounded-full text-xs text-gray-300 border border-gray-700/50">TypeScript</span>
-                    <span class="px-3 py-1 bg-dark rounded-full text-xs text-gray-300 border border-gray-700/50">React</span>
-                    <span class="px-3 py-1 bg-dark rounded-full text-xs text-gray-300 border border-gray-700/50">Node.js</span>
-                    <span class="px-3 py-1 bg-dark rounded-full text-xs text-gray-300 border border-gray-700/50">AWS</span>
-                    <span class="px-3 py-1 bg-dark rounded-full text-xs text-gray-300 border border-gray-700/50">Docker</span>
-                    <span class="px-3 py-1 bg-dark rounded-full text-xs text-gray-300 border border-gray-700/50">Kubernetes</span>
-                    <span class="px-3 py-1 bg-dark rounded-full text-xs text-gray-300 border border-gray-700/50">PostgreSQL</span>
+            <!-- 代理人和桌子 -->
+            <div class="flex flex-col items-center justify-center">
+                <div id="agent" class="bg-white rounded-xl shadow-md p-4 mb-6 w-full max-w-xs text-center">
+                    <div class="w-16 h-16 rounded-full bg-agent/10 flex items-center justify-center mx-auto mb-2 border-2 border-agent">
+                        <i class="fa fa-user-circle-o text-2xl text-agent"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold">代理人</h3>
+                    <p id="agentStatus" class="text-sm text-gray-600 mt-1">等待开始...</p>
+                </div>
+                
+                <div id="table" class="bg-table/30 rounded-xl shadow-md p-6 w-full border-2 border-table/50 relative">
+                    <h3 class="text-center font-semibold mb-4">桌子</h3>
+                    <div id="tableResources" class="flex justify-center gap-6 min-h-[80px] items-center">
+                        <div class="text-gray-400 italic">等待放置资源...</div>
+                    </div>
+                    
+                    <!-- 资源转移动画的占位元素 -->
+                    <div id="transferContainer" class="absolute inset-0 pointer-events-none"></div>
+                </div>
+            </div>
+            
+            <!-- 吸烟者B和C -->
+            <div class="grid grid-cols-1 gap-6">
+                <!-- 吸烟者B -->
+                <div id="smokerB" class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center transition-all duration-300">
+                    <div class="w-20 h-20 rounded-full bg-smokerB/10 flex items-center justify-center mb-4 border-2 border-smokerB">
+                        <span class="text-3xl font-bold text-smokerB">B</span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">吸烟者B</h3>
+                    <p class="text-center text-gray-600 mb-4">拥有: 纸<br>缺少: 烟草、火柴</p>
+                    
+                    <div class="flex gap-3 mt-2">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-300 opacity-50">
+                            <i class="fa fa-leaf text-gray-400"></i>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center border border-blue-300">
+                            <i class="fa fa-file-text-o text-blue-600"></i>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-300 opacity-50">
+                            <i class="fa fa-fire text-gray-400"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-sm font-medium text-smokerB hidden" id="smokerBStatus">
+                        <i class="fa fa-smoking"></i> 正在吸烟...
+                    </div>
+                </div>
+                
+                <!-- 吸烟者C -->
+                <div id="smokerC" class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center transition-all duration-300">
+                    <div class="w-20 h-20 rounded-full bg-smokerC/10 flex items-center justify-center mb-4 border-2 border-smokerC">
+                        <span class="text-3xl font-bold text-smokerC">C</span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">吸烟者C</h3>
+                    <p class="text-center text-gray-600 mb-4">拥有: 火柴<br>缺少: 烟草、纸</p>
+                    
+                    <div class="flex gap-3 mt-2">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-300 opacity-50">
+                            <i class="fa fa-leaf text-gray-400"></i>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-300 opacity-50">
+                            <i class="fa fa-file-text-o text-gray-400"></i>
+                        </div>
+                        <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center border border-orange-300">
+                            <i class="fa fa-fire text-orange-600"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-sm font-medium text-smokerC hidden" id="smokerCStatus">
+                        <i class="fa fa-smoking"></i> 正在吸烟...
+                    </div>
                 </div>
             </div>
         </div>
+        
+        <!-- 过程日志 -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">过程日志</h2>
+            <div id="logContainer" class="max-h-40 overflow-y-auto text-gray-700 text-sm space-y-2 border border-gray-200 rounded-lg p-4">
+                <div class="text-gray-500 italic">模拟开始后，日志将显示在这里...</div>
+            </div>
+        </div>
+        
+        <!-- 问题说明 -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">问题说明</h2>
+            <div class="text-gray-700 space-y-2 text-sm">
+                <p>• 三位吸烟者各拥有一种原料，同时缺少另外两种</p>
+                <p>• 代理人每次随机选择两种不同的原料放在桌上</p>
+                <p>• 只有缺少这两种原料的吸烟者才能取走原料并吸烟</p>
+                <p>• 吸烟者吸烟完毕后，通知代理人进行下一轮</p>
+                <p>• 这是一个经典的进程同步问题，展示了如何协调多个进程对资源的访问</p>
+            </div>
+        </div>
+        
+        <footer class="text-center text-gray-500 text-sm mt-10 pb-6">
+            吸烟者问题演示模型 © 2023
+        </footer>
     </div>
 
     <script>
-        // Simulate typing animation for the code
-        document.addEventListener('DOMContentLoaded', function() {
-            // Show contact info after a delay
-            setTimeout(() => {
-                const contactInfo = document.getElementById('contact-info');
-                contactInfo.classList.remove('hidden');
-                contactInfo.classList.add('animate-fadeIn');
-            }, 3000);
+        // 资源类型定义
+        const RESOURCES = {
+            TOBACCO: { name: '烟草', icon: 'fa-leaf', color: 'green', class: 'bg-green-100 border-green-300 text-green-600' },
+            PAPER: { name: '纸', icon: 'fa-file-text-o', color: 'blue', class: 'bg-blue-100 border-blue-300 text-blue-600' },
+            MATCH: { name: '火柴', icon: 'fa-fire', color: 'orange', class: 'bg-orange-100 border-orange-300 text-orange-600' }
+        };
+        
+        // 吸烟者定义
+        const SMOKERS = {
+            A: { 
+                id: 'smokerA', 
+                has: RESOURCES.TOBACCO, 
+                needs: [RESOURCES.PAPER, RESOURCES.MATCH],
+                statusElement: document.getElementById('smokerAStatus')
+            },
+            B: { 
+                id: 'smokerB', 
+                has: RESOURCES.PAPER, 
+                needs: [RESOURCES.TOBACCO, RESOURCES.MATCH],
+                statusElement: document.getElementById('smokerBStatus')
+            },
+            C: { 
+                id: 'smokerC', 
+                has: RESOURCES.MATCH, 
+                needs: [RESOURCES.TOBACCO, RESOURCES.PAPER],
+                statusElement: document.getElementById('smokerCStatus')
+            }
+        };
+        
+        // 所有可能的资源组合
+        const RESOURCE_COMBINATIONS = [
+            [RESOURCES.TOBACCO, RESOURCES.PAPER],
+            [RESOURCES.TOBACCO, RESOURCES.MATCH],
+            [RESOURCES.PAPER, RESOURCES.MATCH]
+        ];
+        
+        // 模拟状态变量
+        let simulationState = {
+            running: false,
+            round: 0,
+            speed: 1500, // 中等速度
+            speedLevel: 1, // 0:慢, 1:中, 2:快
+            inProgress: false // 是否正在执行一步
+        };
+        
+        // DOM元素
+        const startBtn = document.getElementById('startBtn');
+        const stepBtn = document.getElementById('stepBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const speedBtn = document.getElementById('speedBtn');
+        const speedText = document.getElementById('speedText');
+        const statusText = document.getElementById('statusText');
+        const roundCounter = document.getElementById('roundCounter');
+        const tableResources = document.getElementById('tableResources');
+        const agentStatus = document.getElementById('agentStatus');
+        const logContainer = document.getElementById('logContainer');
+        const transferContainer = document.getElementById('transferContainer');
+        
+        // 初始化事件监听
+        function initEventListeners() {
+            startBtn.addEventListener('click', toggleSimulation);
+            stepBtn.addEventListener('click', executeStep);
+            resetBtn.addEventListener('click', resetSimulation);
+            speedBtn.addEventListener('click', changeSpeed);
+        }
+        
+        // 切换模拟运行状态
+        function toggleSimulation() {
+            if (simulationState.running) {
+                stopSimulation();
+            } else {
+                startSimulation();
+            }
+        }
+        
+        // 开始模拟
+        function startSimulation() {
+            if (simulationState.inProgress) return;
             
-            // Tab switching functionality
-            const tabs = document.querySelectorAll('.tag-inactive');
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    // Remove active class from all tabs
-                    document.querySelectorAll('.tag-active, .tag-inactive').forEach(t => {
-                        t.classList.remove('tag-active');
-                        t.classList.add('tag-inactive');
-                    });
-                    
-                    // Add active class to clicked tab
-                    this.classList.remove('tag-inactive');
-                    this.classList.add('tag-active');
-                    
-                    // Here you would normally switch content based on the tab
-                });
+            simulationState.running = true;
+            startBtn.innerHTML = '<i class="fa fa-pause"></i> 暂停模拟';
+            statusText.textContent = '模拟正在运行...';
+            log('模拟开始');
+            
+            // 如果当前没有资源在桌上，立即执行一步
+            if (tableResources.children.length <= 1) {
+                executeStep();
+            }
+        }
+        
+        // 停止模拟
+        function stopSimulation() {
+            simulationState.running = false;
+            startBtn.innerHTML = '<i class="fa fa-play"></i> 继续模拟';
+            statusText.textContent = '模拟已暂停';
+            log('模拟暂停');
+        }
+        
+        // 重置模拟
+        function resetSimulation() {
+            simulationState.running = false;
+            simulationState.round = 0;
+            simulationState.inProgress = false;
+            
+            startBtn.innerHTML = '<i class="fa fa-play"></i> 开始模拟';
+            statusText.textContent = '准备就绪，请点击"开始模拟"或"单步执行"';
+            roundCounter.textContent = '0';
+            agentStatus.textContent = '等待开始...';
+            
+            // 清空桌子
+            tableResources.innerHTML = '<div class="text-gray-400 italic">等待放置资源...</div>';
+            
+            // 重置吸烟者状态
+            Object.values(SMOKERS).forEach(smoker => {
+                document.getElementById(smoker.id).classList.remove('smoker-active');
+                smoker.statusElement.classList.add('hidden');
             });
-        });
+            
+            // 清空日志
+            logContainer.innerHTML = '<div class="text-gray-500 italic">模拟开始后，日志将显示在这里...</div>';
+            log('模拟已重置');
+        }
+        
+        // 改变速度
+        function changeSpeed() {
+            // 循环切换速度: 慢 -> 中 -> 快 -> 慢...
+            simulationState.speedLevel = (simulationState.speedLevel + 1) % 3;
+            
+            switch (simulationState.speedLevel) {
+                case 0:
+                    simulationState.speed = 3000;
+                    speedText.textContent = '慢速';
+                    log('模拟速度设置为: 慢速');
+                    break;
+                case 1:
+                    simulationState.speed = 1500;
+                    speedText.textContent = '中等';
+                    log('模拟速度设置为: 中等');
+                    break;
+                case 2:
+                    simulationState.speed = 700;
+                    speedText.textContent = '快速';
+                    log('模拟速度设置为: 快速');
+                    break;
+            }
+        }
+        
+        // 执行一步模拟
+        function executeStep() {
+            if (simulationState.inProgress) return;
+            
+            simulationState.inProgress = true;
+            stepBtn.disabled = true;
+            
+            // 增加轮次计数
+            simulationState.round++;
+            roundCounter.textContent = simulationState.round;
+            
+            // 代理人选择两种资源
+            agentStatus.textContent = '正在选择资源...';
+            statusText.textContent = `第 ${simulationState.round} 轮: 代理人正在选择资源`;
+            log(`第 ${simulationState.round} 轮开始: 代理人正在选择资源`);
+            
+            setTimeout(() => {
+                // 随机选择一种资源组合
+                const combination = RESOURCE_COMBINATIONS[Math.floor(Math.random() * RESOURCE_COMBINATIONS.length)];
+                
+                // 显示代理人放置资源
+                agentStatus.textContent = `已放置: ${combination[0].name} 和 ${combination[1].name}`;
+                statusText.textContent = `第 ${simulationState.round} 轮: 代理人放置了 ${combination[0].name} 和 ${combination[1].name}`;
+                log(`代理人放置了: ${combination[0].name} 和 ${combination[1].name}`);
+                
+                // 在桌上显示资源
+                displayResourcesOnTable(combination);
+                
+                // 查找匹配的吸烟者
+                setTimeout(() => {
+                    const smoker = findMatchingSmoker(combination);
+                    
+                    if (smoker) {
+                        // 高亮显示匹配的吸烟者
+                        statusText.textContent = `第 ${simulationState.round} 轮: 吸烟者${smoker.id} 可以吸烟`;
+                        log(`吸烟者${smoker.id} 匹配所需资源，准备吸烟`);
+                        
+                        const smokerElement = document.getElementById(smoker.id);
+                        smokerElement.classList.add('smoker-active');
+                        smoker.statusElement.classList.remove('hidden');
+                        
+                        // 资源转移动画
+                        animateResourceTransfer(combination, smoker);
+                        
+                        // 吸烟过程
+                        setTimeout(() => {
+                            // 清除桌上的资源
+                            tableResources.innerHTML = '<div class="text-gray-400 italic">等待放置资源...</div>';
+                            
+                            // 重置吸烟者状态
+                            smokerElement.classList.remove('smoker-active');
+                            smoker.statusElement.classList.add('hidden');
+                            
+                            agentStatus.textContent = '等待吸烟者通知...';
+                            statusText.textContent = `第 ${simulationState.round} 轮: 吸烟者${smoker.id} 正在吸烟`;
+                            log(`吸烟者${smoker.id} 正在吸烟`);
+                            
+                            // 吸烟完成
+                            setTimeout(() => {
+                                agentStatus.textContent = '收到完成通知，准备下一轮';
+                                statusText.textContent = `第 ${simulationState.round} 轮: 吸烟者${smoker.id} 吸烟完成，通知代理人`;
+                                log(`吸烟者${smoker.id} 吸烟完成，通知代理人`);
+                                
+                                simulationState.inProgress = false;
+                                stepBtn.disabled = false;
+                                
+                                // 如果模拟仍在运行，继续下一轮
+                                if (simulationState.running) {
+                                    setTimeout(executeStep, 500);
+                                }
+                            }, simulationState.speed * 0.8);
+                        }, simulationState.speed * 0.5);
+                    } else {
+                        // 理论上不会走到这里，因为总会有一个匹配的吸烟者
+                        statusText.textContent = '错误: 没有找到匹配的吸烟者';
+                        log('错误: 没有找到匹配的吸烟者');
+                        simulationState.inProgress = false;
+                        stepBtn.disabled = false;
+                    }
+                }, simulationState.speed * 0.5);
+            }, simulationState.speed * 0.3);
+        }
+        
+        // 在桌上显示资源
+        function displayResourcesOnTable(resources) {
+            tableResources.innerHTML = '';
+            
+            resources.forEach(resource => {
+                const resourceElement = document.createElement('div');
+                resourceElement.className = `w-16 h-16 rounded-full ${resource.class} flex items-center justify-center resource-appear floating`;
+                resourceElement.innerHTML = `<i class="fa ${resource.icon} text-2xl"></i>`;
+                resourceElement.title = resource.name;
+                tableResources.appendChild(resourceElement);
+            });
+        }
+        
+        // 查找匹配的吸烟者（需要桌上的两种资源）
+        function findMatchingSmoker(resources) {
+            // 检查每种资源组合是否与吸烟者所需资源匹配
+            for (const key in SMOKERS) {
+                const smoker = SMOKERS[key];
+                // 检查吸烟者是否需要这两种资源（顺序无关）
+                if (
+                    (smoker.needs[0] === resources[0] && smoker.needs[1] === resources[1]) ||
+                    (smoker.needs[0] === resources[1] && smoker.needs[1] === resources[0])
+                ) {
+                    return smoker;
+                }
+            }
+            return null;
+        }
+        
+        // 资源从桌子转移到吸烟者的动画
+        function animateResourceTransfer(resources, smoker) {
+            // 获取桌子和吸烟者的位置信息
+            const tableRect = tableResources.getBoundingClientRect();
+            const smokerRect = document.getElementById(smoker.id).getBoundingClientRect();
+            const containerRect = transferContainer.getBoundingClientRect();
+            
+            // 计算转移的目标位置
+            const tx = smokerRect.left - containerRect.left - (tableRect.width / 2);
+            const ty = smokerRect.top - containerRect.top - (tableRect.height / 2);
+            
+            // 创建资源副本用于动画
+            resources.forEach((resource, index) => {
+                const offset = (index === 0) ? -30 : 30; // 两个资源稍微错开一点
+                
+                const resourceClone = document.createElement('div');
+                resourceClone.className = `w-16 h-16 rounded-full ${resource.class} flex items-center justify-center absolute`;
+                resourceClone.innerHTML = `<i class="fa ${resource.icon} text-2xl"></i>`;
+                resourceClone.style.left = `${tableRect.width / 2 + offset}px`;
+                resourceClone.style.top = `${tableRect.height / 2}px`;
+                resourceClone.style.setProperty('--tx', `${tx + offset}px`);
+                resourceClone.style.setProperty('--ty', `${ty}px`);
+                
+                transferContainer.appendChild(resourceClone);
+                
+                // 触发动画
+                setTimeout(() => {
+                    resourceClone.classList.add('transfer');
+                }, 10);
+                
+                // 动画结束后移除元素
+                setTimeout(() => {
+                    resourceClone.remove();
+                }, 1000);
+            });
+        }
+        
+        // 添加日志条目
+        function log(message) {
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            
+            // 添加时间戳
+            const now = new Date();
+            const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            
+            logEntry.innerHTML = `<span class="text-gray-500">[${timeString}]</span> ${message}`;
+            
+            // 如果是初始状态，先清空
+            if (logContainer.innerHTML.includes('模拟开始后，日志将显示在这里...')) {
+                logContainer.innerHTML = '';
+            }
+            
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight; // 自动滚动到底部
+        }
+        
+        // 初始化
+        function init() {
+            initEventListeners();
+        }
+        
+        // 启动应用
+        window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
-    
