@@ -1,13 +1,10 @@
-<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>吸烟者问题演示模型</title>
+    <title>操作系统 - 吸烟者问题三种方案模拟</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    
-    <!-- 配置Tailwind自定义颜色和字体 -->
     <script>
         tailwind.config = {
             theme: {
@@ -15,12 +12,11 @@
                     colors: {
                         primary: '#3B82F6',
                         secondary: '#10B981',
-                        accent: '#F59E0B',
-                        smokerA: '#EF4444',
-                        smokerB: '#8B5CF6',
-                        smokerC: '#EC4899',
-                        agent: '#6366F1',
-                        table: '#D1D5DB'
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        dark: '#1E293B',
+                        light: '#F8FAFC',
+                        petri: '#8B5CF6' // Petri网方案主题色
                     },
                     fontFamily: {
                         sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -29,534 +25,1648 @@
             }
         }
     </script>
-    
     <style type="text/tailwindcss">
         @layer utilities {
-            .content-auto {
-                content-visibility: auto;
+            .content-auto { content-visibility: auto; }
+            .card-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); }
+            .card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+            .card-hover:hover { transform: translateY(-5px); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12); }
+            .pulse-animation { animation: pulse 2s infinite; }
+            @keyframes pulse {
+                0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+                70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
             }
-            .resource-appear {
-                animation: resourceAppear 0.5s ease-out forwards;
+            .fade-in { animation: fadeIn 0.5s ease-in; }
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            .slide-up { animation: slideUp 0.3s ease-out; }
+            @keyframes slideUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+            .resource-item {
+                position: fixed; /* 改为fixed定位解决滚动问题 */
+                transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+                z-index: 10;
+                pointer-events: none;
+                opacity: 0;
             }
-            .smoker-active {
-                animation: smokerPulse 1.5s infinite;
+            .resource-to-table { opacity: 1; }
+            .resource-to-smoker { opacity: 1; }
+            .resource-disappear {
+                opacity: 0;
+                transform: scale(0.5);
+                transition: all 0.3s ease-out;
             }
-            .floating {
-                animation: floating 3s ease-in-out infinite;
-            }
-            .transfer {
-                animation: transfer 1s ease-in-out forwards;
-            }
-        }
-        
-        @keyframes resourceAppear {
-            0% { transform: scale(0); opacity: 0; }
-            70% { transform: scale(1.1); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        
-        @keyframes smokerPulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
-            50% { transform: scale(1.05); box-shadow: 0 0 25px rgba(59, 130, 246, 0.8); }
-        }
-        
-        @keyframes floating {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        
-        @keyframes transfer {
-            0% { transform: translateX(0) translateY(0); opacity: 1; }
-            100% { transform: translateX(var(--tx)) translateY(var(--ty)); opacity: 0; }
+            .resource-grid-cell { transition: all 0.3s ease; }
+            .resource-grid-cell.filled { background-color: rgba(59, 130, 246, 0.1); border-color: #3B82F6; }
+            .resource-grid-cell.petri-filled { background-color: rgba(139, 92, 246, 0.1); border-color: #8B5CF6; }
+            .tab-active { border-bottom: 3px solid #3B82F6; color: #3B82F6; font-weight: 600; }
+            .tab-petri-active { border-bottom: 3px solid #8B5CF6; color: #8B5CF6; font-weight: 600; }
+            .tab-deadlock-active { border-bottom: 3px solid #EF4444; color: #EF4444; font-weight: 600; }
         }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen font-sans">
-    <div class="container mx-auto px-4 py-8 max-w-6xl">
-        <!-- 标题部分 -->
-        <header class="text-center mb-10">
-            <h1 class="text-[clamp(1.8rem,5vw,3rem)] font-bold text-gray-800 mb-3">吸烟者问题演示模型</h1>
-            <p class="text-gray-600 max-w-3xl mx-auto">经典的进程同步与互斥问题模拟，展示代理人与吸烟者之间的资源交互过程</p>
-        </header>
-        
-        <!-- 控制面板 -->
-        <div class="flex flex-wrap justify-center gap-4 mb-8 p-4 bg-white rounded-xl shadow-md">
-            <button id="startBtn" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all flex items-center gap-2">
-                <i class="fa fa-play"></i> 开始模拟
-            </button>
-            <button id="stepBtn" class="px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent/90 transition-all flex items-center gap-2">
-                <i class="fa fa-step-forward"></i> 单步执行
-            </button>
-            <button id="resetBtn" class="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-all flex items-center gap-2">
-                <i class="fa fa-refresh"></i> 重置
-            </button>
-            <button id="speedBtn" class="px-6 py-3 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-all flex items-center gap-2">
-                <i class="fa fa-tachometer"></i> 速度: <span id="speedText">中等</span>
-            </button>
+<body class="bg-gray-50 min-h-screen py-6 px-4 md:px-6 relative">
+    <!-- 资源动画容器 -->
+    <div id="resource-animation-container" class="fixed inset-0 pointer-events-none z-20"></div>
+
+    <div class="container mx-auto max-w-7xl bg-white rounded-xl shadow-lg overflow-hidden relative z-10">
+        <!-- 标题区域 -->
+        <div class="bg-gradient-to-r from-primary to-blue-700 text-white p-6 md:p-8">
+            <h1 class="text-[clamp(1.5rem,3vw,2.5rem)] font-bold text-center mb-2">吸烟者问题三种方案模拟</h1>
+            <h2 class="text-center text-blue-100 font-normal text-[clamp(1rem,1.5vw,1.25rem)]">
+                传统信号量（有死锁）| Parnas辅助进程（无死锁）| Petri网抑制弧（无死锁）
+            </h2>
         </div>
-        
-        <!-- 状态信息 -->
-        <div class="bg-white rounded-xl shadow-md p-4 mb-8">
-            <h2 class="text-xl font-semibold text-gray-800 mb-2">当前状态</h2>
-            <div id="statusText" class="text-gray-700 min-h-[40px]">
-                准备就绪，请点击"开始模拟"或"单步执行"
-            </div>
-            <div class="mt-3 text-sm text-gray-500">
-                轮次: <span id="roundCounter" class="font-semibold">0</span>
+
+        <!-- 方案切换选项卡 -->
+        <div class="border-b border-gray-200 bg-white">
+            <div class="flex flex-wrap">
+                <button id="tab-deadlock" class="px-6 py-4 text-gray-600 hover:text-danger transition-colors duration-300">
+                    1. 传统信号量方案（有死锁）
+                </button>
+                <button id="tab-parnas" class="px-6 py-4 text-gray-600 hover:text-primary transition-colors duration-300 tab-active">
+                    2. Parnas辅助进程方案（无死锁）
+                </button>
+                <button id="tab-petri" class="px-6 py-4 text-gray-600 hover:text-petri transition-colors duration-300">
+                    3. Petri网抑制弧方案（无死锁）
+                </button>
             </div>
         </div>
-        
-        <!-- 主要模拟区域 -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <!-- 吸烟者A -->
-            <div id="smokerA" class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center transition-all duration-300">
-                <div class="w-20 h-20 rounded-full bg-smokerA/10 flex items-center justify-center mb-4 border-2 border-smokerA">
-                    <span class="text-3xl font-bold text-smokerA">A</span>
+
+        <!-- 方案1：传统信号量方案（有死锁） -->
+        <div id="scheme-deadlock" class="hidden">
+            <!-- 控制面板 -->
+            <div class="bg-gray-50 border-b border-gray-100 p-4 md:p-6">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center space-x-3">
+                        <button id="dl-startBtn" class="bg-secondary hover:bg-green-600 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 flex items-center">
+                            <i class="fa fa-play mr-2"></i> 开始模拟
+                        </button>
+                        <button id="dl-pauseBtn" class="bg-warning hover:bg-amber-600 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 flex items-center opacity-50 cursor-not-allowed" disabled>
+                            <i class="fa fa-pause mr-2"></i> 暂停模拟
+                        </button>
+                        <button id="dl-resetBtn" class="bg-danger hover:bg-red-600 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 flex items-center">
+                            <i class="fa fa-refresh mr-2"></i> 重置模拟
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-3 w-full md:w-auto">
+                        <label for="dl-speedControl" class="text-gray-700 font-medium whitespace-nowrap">模拟速度:</label>
+                        <input type="range" id="dl-speedControl" min="1" max="10" value="5" class="w-full md:w-40 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-danger">
+                        <span id="dl-speedValue" class="text-gray-700 font-medium min-w-[3rem] text-center">中等</span>
+                    </div>
                 </div>
-                <h3 class="text-xl font-semibold mb-3">吸烟者A</h3>
-                <p class="text-center text-gray-600 mb-4">拥有: 烟草<br>缺少: 纸、火柴</p>
-                
-                <div class="flex gap-3 mt-2">
-                    <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center border border-green-300">
-                        <i class="fa fa-leaf text-green-600"></i>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-300 opacity-50">
-                        <i class="fa fa-file-text-o text-gray-400"></i>
-                    </div>
-                    <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-300 opacity-50">
-                        <i class="fa fa-fire text-gray-400"></i>
-                    </div>
-                </div>
-                
-                <div class="mt-4 text-sm font-medium text-smokerA hidden" id="smokerAStatus">
-                    <i class="fa fa-smoking"></i> 正在吸烟...
-                </div>
-            </div>
-            
-            <!-- 代理人和桌子 -->
-            <div class="flex flex-col items-center justify-center">
-                <div id="agent" class="bg-white rounded-xl shadow-md p-4 mb-6 w-full max-w-xs text-center">
-                    <div class="w-16 h-16 rounded-full bg-agent/10 flex items-center justify-center mx-auto mb-2 border-2 border-agent">
-                        <i class="fa fa-user-circle-o text-2xl text-agent"></i>
-                    </div>
-                    <h3 class="text-lg font-semibold">代理人</h3>
-                    <p id="agentStatus" class="text-sm text-gray-600 mt-1">等待开始...</p>
-                </div>
-                
-                <div id="table" class="bg-table/30 rounded-xl shadow-md p-6 w-full border-2 border-table/50 relative">
-                    <h3 class="text-center font-semibold mb-4">桌子</h3>
-                    <div id="tableResources" class="flex justify-center gap-6 min-h-[80px] items-center">
-                        <div class="text-gray-400 italic">等待放置资源...</div>
-                    </div>
-                    
-                    <!-- 资源转移动画的占位元素 -->
-                    <div id="transferContainer" class="absolute inset-0 pointer-events-none"></div>
+                <!-- 方案提示 -->
+                <div class="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-danger">
+                    <i class="fa fa-exclamation-triangle mr-1"></i> 
+                    <strong>方案特性</strong>：直接使用P/V信号量，无法原子性检测两种资源，易触发死锁（如：吸烟者A抢纸、吸烟者B抢火柴后互相等待）
                 </div>
             </div>
-            
-            <!-- 吸烟者B和C -->
-            <div class="grid grid-cols-1 gap-6">
-                <!-- 吸烟者B -->
-                <div id="smokerB" class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center transition-all duration-300">
-                    <div class="w-20 h-20 rounded-full bg-smokerB/10 flex items-center justify-center mb-4 border-2 border-smokerB">
-                        <span class="text-3xl font-bold text-smokerB">B</span>
+
+            <!-- 模拟区域 -->
+            <div class="p-4 md:p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6 relative">
+                    <!-- 代理 -->
+                    <div class="lg:col-span-1 bg-white rounded-xl p-4 card-shadow card-hover" id="dl-agent-area">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-lg font-bold text-dark flex items-center">
+                                <i class="fa fa-cogs text-danger mr-2"></i> 代理 (Agent)
+                            </h3>
+                            <span id="dl-agentStatusBadge" class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                                就绪
+                            </span>
+                        </div>
+                        <div id="dl-agentState" class="p-3 bg-gray-50 rounded-lg text-gray-700 mb-3 text-center">
+                            等待开始
+                        </div>
+                        <div class="text-sm text-gray-600 mb-2">
+                            <i class="fa fa-signal text-danger mr-1"></i> 信号量状态：
+                        </div>
+                        <div class="text-xs text-gray-500 space-y-1">
+                            <div>paper_sem: <span id="dl-paper-sem">0</span></div>
+                            <div>match_sem: <span id="dl-match-sem">0</span></div>
+                            <div>tobacco_sem: <span id="dl-tobacco-sem">0</span></div>
+                            <div>agent_sem: <span id="dl-agent-sem">1</span></div>
+                        </div>
                     </div>
-                    <h3 class="text-xl font-semibold mb-3">吸烟者B</h3>
-                    <p class="text-center text-gray-600 mb-4">拥有: 纸<br>缺少: 烟草、火柴</p>
-                    
-                    <div class="flex gap-3 mt-2">
-                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-300 opacity-50">
-                            <i class="fa fa-leaf text-gray-400"></i>
+
+                    <!-- 桌面（共享资源区） -->
+                    <div class="lg:col-span-3 bg-gradient-to-br from-red-50 to-orange-50 rounded-xl p-5 card-shadow flex flex-col" id="dl-table-area">
+                        <h3 class="text-lg font-bold text-dark mb-4 flex items-center">
+                            <i class="fa fa-table text-danger mr-2"></i> 共享桌面（资源格子）
+                        </h3>
+                        <div class="flex-grow flex flex-col items-center justify-center">
+                            <div class="w-full max-w-md h-48 bg-white rounded-lg card-shadow p-4 mb-4">
+                                <div class="grid grid-cols-3 gap-4 h-full">
+                                    <!-- 烟草格子 -->
+                                    <div id="dl-tobacco-cell" class="resource-grid-cell border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center">
+                                        <span class="text-green-600 text-2xl mb-1">🌿</span>
+                                        <span class="text-xs text-gray-500">烟草</span>
+                                        <div id="dl-tobacco-content" class="mt-2 opacity-0 transition-opacity duration-300">
+                                            <span class="text-green-600 text-3xl">🌿</span>
+                                        </div>
+                                    </div>
+                                    <!-- 纸格子 -->
+                                    <div id="dl-paper-cell" class="resource-grid-cell border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center">
+                                        <span class="text-gray-600 text-2xl mb-1">📄</span>
+                                        <span class="text-xs text-gray-500">纸</span>
+                                        <div id="dl-paper-content" class="mt-2 opacity-0 transition-opacity duration-300">
+                                            <span class="text-gray-600 text-3xl">📄</span>
+                                        </div>
+                                    </div>
+                                    <!-- 火柴格子 -->
+                                    <div id="dl-match-cell" class="resource-grid-cell border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center">
+                                        <span class="text-orange-500 text-2xl mb-1">🔥</span>
+                                        <span class="text-xs text-gray-500">火柴</span>
+                                        <div id="dl-match-content" class="mt-2 opacity-0 transition-opacity duration-300">
+                                            <span class="text-orange-500 text-3xl">🔥</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 死锁提示（初始隐藏） -->
+                            <div id="dl-deadlock-alert" class="hidden p-3 bg-red-100 border border-red-200 rounded-lg text-danger text-center font-medium">
+                                <i class="fa fa-lock mr-1"></i> 检测到死锁！请重置模拟
+                            </div>
                         </div>
-                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center border border-blue-300">
-                            <i class="fa fa-file-text-o text-blue-600"></i>
-                        </div>
-                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-300 opacity-50">
-                            <i class="fa fa-fire text-gray-400"></i>
+                        <!-- 统计面板 -->
+                        <div class="mt-6 grid grid-cols-3 gap-3">
+                            <div class="bg-white p-3 rounded-lg card-shadow">
+                                <p class="text-xs text-gray-500 mb-1">吸烟者A</p>
+                                <div class="flex items-center">
+                                    <span id="dl-smokerACount" class="text-xl font-bold text-secondary">0</span>
+                                    <span class="text-sm text-gray-500 ml-1">次吸烟</span>
+                                </div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg card-shadow">
+                                <p class="text-xs text-gray-500 mb-1">吸烟者B</p>
+                                <div class="flex items-center">
+                                    <span id="dl-smokerBCount" class="text-xl font-bold text-secondary">0</span>
+                                    <span class="text-sm text-gray-500 ml-1">次吸烟</span>
+                                </div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg card-shadow">
+                                <p class="text-xs text-gray-500 mb-1">吸烟者C</p>
+                                <div class="flex items-center">
+                                    <span id="dl-smokerCCount" class="text-xl font-bold text-secondary">0</span>
+                                    <span class="text-sm text-gray-500 ml-1">次吸烟</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="mt-4 text-sm font-medium text-smokerB hidden" id="smokerBStatus">
-                        <i class="fa fa-smoking"></i> 正在吸烟...
+
+                    <!-- 吸烟者区域 -->
+                    <div class="lg:col-span-1 flex flex-col gap-4">
+                        <!-- 吸烟者A（持烟草） -->
+                        <div class="bg-white rounded-xl p-4 card-shadow card-hover" id="dl-smokerA-area">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-bold text-dark">吸烟者A</h3>
+                                <span id="dl-smokerAStatusBadge" class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                                    等待
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-1">
+                                <i class="fa fa-leaf text-green-600 mr-1"></i> 持有：烟草
+                            </p>
+                            <p class="text-sm text-gray-600 mb-3">
+                                <i class="fa fa-arrow-right text-danger mr-1"></i> 需获取：纸 + 火柴
+                            </p>
+                            <div id="dl-smokerAState" class="p-2 bg-gray-50 rounded-lg text-gray-700 text-center text-sm">
+                                等待资源
+                            </div>
+                        </div>
+                        <!-- 吸烟者B（持纸） -->
+                        <div class="bg-white rounded-xl p-4 card-shadow card-hover" id="dl-smokerB-area">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-bold text-dark">吸烟者B</h3>
+                                <span id="dl-smokerBStatusBadge" class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                                    等待
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-1">
+                                <i class="fa fa-file-text-o text-gray-600 mr-1"></i> 持有：纸
+                            </p>
+                            <p class="text-sm text-gray-600 mb-3">
+                                <i class="fa fa-arrow-right text-danger mr-1"></i> 需获取：烟草 + 火柴
+                            </p>
+                            <div id="dl-smokerBState" class="p-2 bg-gray-50 rounded-lg text-gray-700 text-center text-sm">
+                                等待资源
+                            </div>
+                        </div>
+                        <!-- 吸烟者C（持火柴） -->
+                        <div class="bg-white rounded-xl p-4 card-shadow card-hover" id="dl-smokerC-area">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-bold text-dark">吸烟者C</h3>
+                                <span id="dl-smokerCStatusBadge" class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                                    等待
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-1">
+                                <i class="fa fa-fire text-orange-500 mr-1"></i> 持有：火柴
+                            </p>
+                            <p class="text-sm text-gray-600 mb-3">
+                                <i class="fa fa-arrow-right text-danger mr-1"></i> 需获取：烟草 + 纸
+                            </p>
+                            <div id="dl-smokerCState" class="p-2 bg-gray-50 rounded-lg text-gray-700 text-center text-sm">
+                                等待资源
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <!-- 吸烟者C -->
-                <div id="smokerC" class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center transition-all duration-300">
-                    <div class="w-20 h-20 rounded-full bg-smokerC/10 flex items-center justify-center mb-4 border-2 border-smokerC">
-                        <span class="text-3xl font-bold text-smokerC">C</span>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-3">吸烟者C</h3>
-                    <p class="text-center text-gray-600 mb-4">拥有: 火柴<br>缺少: 烟草、纸</p>
-                    
-                    <div class="flex gap-3 mt-2">
-                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-300 opacity-50">
-                            <i class="fa fa-leaf text-gray-400"></i>
-                        </div>
-                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center border border-gray-300 opacity-50">
-                            <i class="fa fa-file-text-o text-gray-400"></i>
-                        </div>
-                        <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center border border-orange-300">
-                            <i class="fa fa-fire text-orange-600"></i>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4 text-sm font-medium text-smokerC hidden" id="smokerCStatus">
-                        <i class="fa fa-smoking"></i> 正在吸烟...
+            </div>
+
+            <!-- 日志区域 -->
+            <div class="p-4 md:p-6 border-t border-gray-100 bg-gray-50">
+                <h3 class="text-lg font-bold text-dark mb-4 flex items-center">
+                    <i class="fa fa-history text-danger mr-2"></i> 模拟日志（传统信号量方案）
+                </h3>
+                <div id="dl-log-area" class="h-64 bg-white rounded-xl p-4 overflow-y-auto card-shadow">
+                    <div class="log-item log-system fade-in">
+                        <span class="log-time text-gray-400">[系统初始化]</span>
+                        <span>传统信号量方案就绪，点击「开始模拟」启动（易触发死锁）</span>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- 过程日志 -->
-        <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">过程日志</h2>
-            <div id="logContainer" class="max-h-40 overflow-y-auto text-gray-700 text-sm space-y-2 border border-gray-200 rounded-lg p-4">
-                <div class="text-gray-500 italic">模拟开始后，日志将显示在这里...</div>
+
+        <!-- 方案2：Parnas辅助进程方案（无死锁） -->
+        <div id="scheme-parnas" class="block">
+            <!-- 控制面板 -->
+            <div class="bg-gray-50 border-b border-gray-100 p-4 md:p-6">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center space-x-3">
+                        <button id="pn-startBtn" class="bg-secondary hover:bg-green-600 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 flex items-center">
+                            <i class="fa fa-play mr-2"></i> 开始模拟
+                        </button>
+                        <button id="pn-pauseBtn" class="bg-warning hover:bg-amber-600 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 flex items-center opacity-50 cursor-not-allowed" disabled>
+                            <i class="fa fa-pause mr-2"></i> 暂停模拟
+                        </button>
+                        <button id="pn-resetBtn" class="bg-danger hover:bg-red-600 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 flex items-center">
+                            <i class="fa fa-refresh mr-2"></i> 重置模拟
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-3 w-full md:w-auto">
+                        <label for="pn-speedControl" class="text-gray-700 font-medium whitespace-nowrap">模拟速度:</label>
+                        <input type="range" id="pn-speedControl" min="1" max="10" value="5" class="w-full md:w-40 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+                        <span id="pn-speedValue" class="text-gray-700 font-medium min-w-[3rem] text-center">中等</span>
+                    </div>
+                </div>
+                <!-- 方案提示 -->
+                <div class="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-primary">
+                    <i class="fa fa-check-circle mr-1"></i> 
+                    <strong>方案特性</strong>：引入3个辅助进程（Pushers）跟踪全局资源状态，原子性检测资源组合，彻底避免死锁
+                </div>
+            </div>
+
+            <!-- 模拟区域 -->
+            <div class="p-4 md:p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6 relative">
+                    <!-- 代理 -->
+                    <div class="lg:col-span-1 bg-white rounded-xl p-4 card-shadow card-hover" id="pn-agent-area">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-lg font-bold text-dark flex items-center">
+                                <i class="fa fa-cogs text-primary mr-2"></i> 代理 (Agent)
+                            </h3>
+                            <span id="pn-agentStatusBadge" class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                                就绪
+                            </span>
+                        </div>
+                        <div id="pn-agentState" class="p-3 bg-gray-50 rounded-lg text-gray-700 mb-3 text-center">
+                            等待开始
+                        </div>
+                        <div class="text-sm text-gray-600 mb-2">
+                            <i class="fa fa-list-alt text-primary mr-1"></i> 辅助进程状态：
+                        </div>
+                        <div class="text-xs text-gray-500 space-y-1">
+                            <div>isTobacco: <span id="pn-isTobacco">false</span></div>
+                            <div>isPaper: <span id="pn-isPaper">false</span></div>
+                            <div>isMatch: <span id="pn-isMatch">false</span></div>
+                        </div>
+                    </div>
+
+                    <!-- 桌面（共享资源区） -->
+                    <div class="lg:col-span-3 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 card-shadow flex flex-col" id="pn-table-area">
+                        <h3 class="text-lg font-bold text-dark mb-4 flex items-center">
+                            <i class="fa fa-table text-primary mr-2"></i> 共享桌面（资源格子）
+                        </h3>
+                        <div class="flex-grow flex flex-col items-center justify-center">
+                            <div class="w-full max-w-md h-48 bg-white rounded-lg card-shadow p-4 mb-4">
+                                <div class="grid grid-cols-3 gap-4 h-full">
+                                    <!-- 烟草格子 -->
+                                    <div id="pn-tobacco-cell" class="resource-grid-cell border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center">
+                                        <span class="text-green-600 text-2xl mb-1">🌿</span>
+                                        <span class="text-xs text-gray-500">烟草</span>
+                                        <div id="pn-tobacco-content" class="mt-2 opacity-0 transition-opacity duration-300">
+                                            <span class="text-green-600 text-3xl">🌿</span>
+                                        </div>
+                                    </div>
+                                    <!-- 纸格子 -->
+                                    <div id="pn-paper-cell" class="resource-grid-cell border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center">
+                                        <span class="text-gray-600 text-2xl mb-1">📄</span>
+                                        <span class="text-xs text-gray-500">纸</span>
+                                        <div id="pn-paper-content" class="mt-2 opacity-0 transition-opacity duration-300">
+                                            <span class="text-gray-600 text-3xl">📄</span>
+                                        </div>
+                                    </div>
+                                    <!-- 火柴格子 -->
+                                    <div id="pn-match-cell" class="resource-grid-cell border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center">
+                                        <span class="text-orange-500 text-2xl mb-1">🔥</span>
+                                        <span class="text-xs text-gray-500">火柴</span>
+                                        <div id="pn-match-content" class="mt-2 opacity-0 transition-opacity duration-300">
+                                            <span class="text-orange-500 text-3xl">🔥</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 统计面板 -->
+                        <div class="mt-6 grid grid-cols-3 gap-3">
+                            <div class="bg-white p-3 rounded-lg card-shadow">
+                                <p class="text-xs text-gray-500 mb-1">吸烟者A</p>
+                                <div class="flex items-center">
+                                    <span id="pn-smokerACount" class="text-xl font-bold text-secondary">0</span>
+                                    <span class="text-sm text-gray-500 ml-1">次吸烟</span>
+                                </div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg card-shadow">
+                                <p class="text-xs text-gray-500 mb-1">吸烟者B</p>
+                                <div class="flex items-center">
+                                    <span id="pn-smokerBCount" class="text-xl font-bold text-secondary">0</span>
+                                    <span class="text-sm text-gray-500 ml-1">次吸烟</span>
+                                </div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg card-shadow">
+                                <p class="text-xs text-gray-500 mb-1">吸烟者C</p>
+                                <div class="flex items-center">
+                                    <span id="pn-smokerCCount" class="text-xl font-bold text-secondary">0</span>
+                                    <span class="text-sm text-gray-500 ml-1">次吸烟</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 吸烟者区域 -->
+                    <div class="lg:col-span-1 flex flex-col gap-4">
+                        <!-- 吸烟者A（持烟草） -->
+                        <div class="bg-white rounded-xl p-4 card-shadow card-hover" id="pn-smokerA-area">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-bold text-dark">吸烟者A</h3>
+                                <span id="pn-smokerAStatusBadge" class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                                    等待
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-1">
+                                <i class="fa fa-leaf text-green-600 mr-1"></i> 持有：烟草
+                            </p>
+                            <p class="text-sm text-gray-600 mb-3">
+                                <i class="fa fa-arrow-right text-primary mr-1"></i> 需获取：纸 + 火柴
+                            </p>
+                            <div id="pn-smokerAState" class="p-2 bg-gray-50 rounded-lg text-gray-700 text-center text-sm">
+                                等待资源
+                            </div>
+                        </div>
+                        <!-- 吸烟者B（持纸） -->
+                        <div class="bg-white rounded-xl p-4 card-shadow card-hover" id="pn-smokerB-area">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-bold text-dark">吸烟者B</h3>
+                                <span id="pn-smokerBStatusBadge" class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                                    等待
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-1">
+                                <i class="fa fa-file-text-o text-gray-600 mr-1"></i> 持有：纸
+                            </p>
+                            <p class="text-sm text-gray-600 mb-3">
+                                <i class="fa fa-arrow-right text-primary mr-1"></i> 需获取：烟草 + 火柴
+                            </p>
+                            <div id="pn-smokerBState" class="p-2 bg-gray-50 rounded-lg text-gray-700 text-center text-sm">
+                                等待资源
+                            </div>
+                        </div>
+                        <!-- 吸烟者C（持火柴） -->
+                        <div class="bg-white rounded-xl p-4 card-shadow card-hover" id="pn-smokerC-area">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-bold text-dark">吸烟者C</h3>
+                                <span id="pn-smokerCStatusBadge" class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                                    等待
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-1">
+                                <i class="fa fa-fire text-orange-500 mr-1"></i> 持有：火柴
+                            </p>
+                            <p class="text-sm text-gray-600 mb-3">
+                                <i class="fa fa-arrow-right text-primary mr-1"></i> 需获取：烟草 + 纸
+                            </p>
+                            <div id="pn-smokerCState" class="p-2 bg-gray-50 rounded-lg text-gray-700 text-center text-sm">
+                                等待资源
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日志区域 -->
+            <div class="p-4 md:p-6 border-t border-gray-100 bg-gray-50">
+                <h3 class="text-lg font-bold text-dark mb-4 flex items-center">
+                    <i class="fa fa-history text-primary mr-2"></i> 模拟日志（Parnas辅助进程方案）
+                </h3>
+                <div id="pn-log-area" class="h-64 bg-white rounded-xl p-4 overflow-y-auto card-shadow">
+                    <div class="log-item log-system fade-in">
+                        <span class="log-time text-gray-400">[系统初始化]</span>
+                        <span>Parnas方案就绪，点击「开始模拟」启动（无死锁）</span>
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <!-- 问题说明 -->
-        <div class="bg-white rounded-xl shadow-md p-6">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">问题说明</h2>
-            <div class="text-gray-700 space-y-2 text-sm">
-                <p>• 三位吸烟者各拥有一种原料，同时缺少另外两种</p>
-                <p>• 代理人每次随机选择两种不同的原料放在桌上</p>
-                <p>• 只有缺少这两种原料的吸烟者才能取走原料并吸烟</p>
-                <p>• 吸烟者吸烟完毕后，通知代理人进行下一轮</p>
-                <p>• 这是一个经典的进程同步问题，展示了如何协调多个进程对资源的访问</p>
+
+        <!-- 方案3：Petri网抑制弧方案（无死锁） -->
+        <div id="scheme-petri" class="hidden">
+            <!-- 控制面板 -->
+            <div class="bg-gray-50 border-b border-gray-100 p-4 md:p-6">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center space-x-3">
+                        <button id="pt-startBtn" class="bg-secondary hover:bg-green-600 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 flex items-center">
+                            <i class="fa fa-play mr-2"></i> 开始模拟
+                        </button>
+                        <button id="pt-pauseBtn" class="bg-warning hover:bg-amber-600 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 flex items-center opacity-50 cursor-not-allowed" disabled>
+                            <i class="fa fa-pause mr-2"></i> 暂停模拟
+                        </button>
+                        <button id="pt-resetBtn" class="bg-danger hover:bg-red-600 text-white font-medium py-2 px-6 rounded-lg transition-all duration-300 flex items-center">
+                            <i class="fa fa-refresh mr-2"></i> 重置模拟
+                        </button>
+                    </div>
+                    <div class="flex items-center gap-3 w-full md:w-auto">
+                        <label for="pt-speedControl" class="text-gray-700 font-medium whitespace-nowrap">模拟速度:</label>
+                        <input type="range" id="pt-speedControl" min="1" max="10" value="5" class="w-full md:w-40 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-petri">
+                        <span id="pt-speedValue" class="text-gray-700 font-medium min-w-[3rem] text-center">中等</span>
+                    </div>
+                </div>
+                <!-- 方案提示 -->
+                <div class="mt-4 p-3 bg-purple-50 border border-purple-100 rounded-lg text-sm text-petri">
+                    <i class="fa fa-shield mr-1"></i> 
+                    <strong>方案特性</strong>：通过抑制弧（P4→T1）约束代理行为，仅当吸烟完成（P4有标记）时投放资源，形式化验证无死锁
+                </div>
+            </div>
+
+            <!-- 模拟区域 -->
+            <div class="p-4 md:p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 md:gap-6 relative">
+                    <!-- 代理 + Petri网库所状态 -->
+                    <div class="lg:col-span-1 bg-white rounded-xl p-4 card-shadow card-hover" id="pt-agent-area">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-lg font-bold text-dark flex items-center">
+                                <i class="fa fa-cogs text-petri mr-2"></i> 代理 (Agent)
+                            </h3>
+                            <span id="pt-agentStatusBadge" class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                                就绪
+                            </span>
+                        </div>
+                        <div id="pt-agentState" class="p-3 bg-gray-50 rounded-lg text-gray-700 mb-3 text-center">
+                            等待开始
+                        </div>
+                        <div class="text-sm text-gray-600 mb-2">
+                            <i class="fa fa-circle-o text-petri mr-1"></i> Petri网库所（Token数）：
+                        </div>
+                        <div class="text-xs text-gray-500 space-y-1">
+                            <div>P1(烟草): <span id="pt-P1">0</span></div>
+                            <div>P2(纸): <span id="pt-P2">0</span></div>
+                            <div>P3(火柴): <span id="pt-P3">0</span></div>
+                            <div>P4(代理就绪): <span id="pt-P4">1</span></div>
+                        </div>
+                        <div class="mt-3 p-2 bg-purple-50 rounded-lg text-xs text-petri text-center">
+                            抑制弧：P4→T1（P4=1时允许投放）
+                        </div>
+                    </div>
+
+                    <!-- 桌面（共享资源区） -->
+                    <div class="lg:col-span-3 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-5 card-shadow flex flex-col" id="pt-table-area">
+                        <h3 class="text-lg font-bold text-dark mb-4 flex items-center">
+                            <i class="fa fa-table text-petri mr-2"></i> 共享桌面（资源格子）
+                        </h3>
+                        <div class="flex-grow flex flex-col items-center justify-center">
+                            <div class="w-full max-w-md h-48 bg-white rounded-lg card-shadow p-4 mb-4">
+                                <div class="grid grid-cols-3 gap-4 h-full">
+                                    <!-- 烟草格子 -->
+                                    <div id="pt-tobacco-cell" class="resource-grid-cell border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center">
+                                        <span class="text-green-600 text-2xl mb-1">🌿</span>
+                                        <span class="text-xs text-gray-500">烟草（P1）</span>
+                                        <div id="pt-tobacco-content" class="mt-2 opacity-0 transition-opacity duration-300">
+                                            <span class="text-green-600 text-3xl">🌿</span>
+                                        </div>
+                                    </div>
+                                    <!-- 纸格子 -->
+                                    <div id="pt-paper-cell" class="resource-grid-cell border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center">
+                                        <span class="text-gray-600 text-2xl mb-1">📄</span>
+                                        <span class="text-xs text-gray-500">纸（P2）</span>
+                                        <div id="pt-paper-content" class="mt-2 opacity-0 transition-opacity duration-300">
+                                            <span class="text-gray-600 text-3xl">📄</span>
+                                        </div>
+                                    </div>
+                                    <!-- 火柴格子 -->
+                                    <div id="pt-match-cell" class="resource-grid-cell border-2 border-gray-200 rounded-lg flex flex-col items-center justify-center">
+                                        <span class="text-orange-500 text-2xl mb-1">🔥</span>
+                                        <span class="text-xs text-gray-500">火柴（P3）</span>
+                                        <div id="pt-match-content" class="mt-2 opacity-0 transition-opacity duration-300">
+                                            <span class="text-orange-500 text-3xl">🔥</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 统计面板 -->
+                        <div class="mt-6 grid grid-cols-3 gap-3">
+                            <div class="bg-white p-3 rounded-lg card-shadow">
+                                <p class="text-xs text-gray-500 mb-1">吸烟者A</p>
+                                <div class="flex items-center">
+                                    <span id="pt-smokerACount" class="text-xl font-bold text-secondary">0</span>
+                                    <span class="text-sm text-gray-500 ml-1">次吸烟</span>
+                                </div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg card-shadow">
+                                <p class="text-xs text-gray-500 mb-1">吸烟者B</p>
+                                <div class="flex items-center">
+                                    <span id="pt-smokerBCount" class="text-xl font-bold text-secondary">0</span>
+                                    <span class="text-sm text-gray-500 ml-1">次吸烟</span>
+                                </div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg card-shadow">
+                                <p class="text-xs text-gray-500 mb-1">吸烟者C</p>
+                                <div class="flex items-center">
+                                    <span id="pt-smokerCCount" class="text-xl font-bold text-secondary">0</span>
+                                    <span class="text-sm text-gray-500 ml-1">次吸烟</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 吸烟者区域 -->
+                    <div class="lg:col-span-1 flex flex-col gap-4">
+                        <!-- 吸烟者A（持烟草） -->
+                        <div class="bg-white rounded-xl p-4 card-shadow card-hover" id="pt-smokerA-area">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-bold text-dark">吸烟者A</h3>
+                                <span id="pt-smokerAStatusBadge" class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                                    等待
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-1">
+                                <i class="fa fa-leaf text-green-600 mr-1"></i> 持有：烟草
+                            </p>
+                            <p class="text-sm text-gray-600 mb-3">
+                                <i class="fa fa-arrow-right text-petri mr-1"></i> 需获取：纸 + 火柴
+                            </p>
+                            <div id="pt-smokerAState" class="p-2 bg-gray-50 rounded-lg text-gray-700 text-center text-sm">
+                                等待资源
+                            </div>
+                        </div>
+                        <!-- 吸烟者B（持纸） -->
+                        <div class="bg-white rounded-xl p-4 card-shadow card-hover" id="pt-smokerB-area">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-bold text-dark">吸烟者B</h3>
+                                <span id="pt-smokerBStatusBadge" class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                                    等待
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-1">
+                                <i class="fa fa-file-text-o text-gray-600 mr-1"></i> 持有：纸
+                            </p>
+                            <p class="text-sm text-gray-600 mb-3">
+                                <i class="fa fa-arrow-right text-petri mr-1"></i> 需获取：烟草 + 火柴
+                            </p>
+                            <div id="pt-smokerBState" class="p-2 bg-gray-50 rounded-lg text-gray-700 text-center text-sm">
+                                等待资源
+                            </div>
+                        </div>
+                        <!-- 吸烟者C（持火柴） -->
+                        <div class="bg-white rounded-xl p-4 card-shadow card-hover" id="pt-smokerC-area">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-lg font-bold text-dark">吸烟者C</h3>
+                                <span id="pt-smokerCStatusBadge" class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                                    等待
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-1">
+                                <i class="fa fa-fire text-orange-500 mr-1"></i> 持有：火柴
+                            </p>
+                            <p class="text-sm text-gray-600 mb-3">
+                                <i class="fa fa-arrow-right text-petri mr-1"></i> 需获取：烟草 + 纸
+                            </p>
+                            <div id="pt-smokerCState" class="p-2 bg-gray-50 rounded-lg text-gray-700 text-center text-sm">
+                                等待资源
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日志区域 -->
+            <div class="p-4 md:p-6 border-t border-gray-100 bg-gray-50">
+                <h3 class="text-lg font-bold text-dark mb-4 flex items-center">
+                    <i class="fa fa-history text-petri mr-2"></i> 模拟日志（Petri网抑制弧方案）
+                </h3>
+                <div id="pt-log-area" class="h-64 bg-white rounded-xl p-4 overflow-y-auto card-shadow">
+                    <div class="log-item log-system fade-in">
+                        <span class="log-time text-gray-400">[系统初始化]</span>
+                        <span>Petri网方案就绪，点击「开始模拟」启动（抑制弧保障无死锁）</span>
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <footer class="text-center text-gray-500 text-sm mt-10 pb-6">
-            吸烟者问题演示模型 © 2023
-        </footer>
     </div>
 
     <script>
-        // 资源类型定义
-        const RESOURCES = {
-            TOBACCO: { name: '烟草', icon: 'fa-leaf', color: 'green', class: 'bg-green-100 border-green-300 text-green-600' },
-            PAPER: { name: '纸', icon: 'fa-file-text-o', color: 'blue', class: 'bg-blue-100 border-blue-300 text-blue-600' },
-            MATCH: { name: '火柴', icon: 'fa-fire', color: 'orange', class: 'bg-orange-100 border-orange-300 text-orange-600' }
-        };
-        
-        // 吸烟者定义
-        const SMOKERS = {
-            A: { 
-                id: 'smokerA', 
-                has: RESOURCES.TOBACCO, 
-                needs: [RESOURCES.PAPER, RESOURCES.MATCH],
-                statusElement: document.getElementById('smokerAStatus')
-            },
-            B: { 
-                id: 'smokerB', 
-                has: RESOURCES.PAPER, 
-                needs: [RESOURCES.TOBACCO, RESOURCES.MATCH],
-                statusElement: document.getElementById('smokerBStatus')
-            },
-            C: { 
-                id: 'smokerC', 
-                has: RESOURCES.MATCH, 
-                needs: [RESOURCES.TOBACCO, RESOURCES.PAPER],
-                statusElement: document.getElementById('smokerCStatus')
-            }
-        };
-        
-        // 所有可能的资源组合
-        const RESOURCE_COMBINATIONS = [
-            [RESOURCES.TOBACCO, RESOURCES.PAPER],
-            [RESOURCES.TOBACCO, RESOURCES.MATCH],
-            [RESOURCES.PAPER, RESOURCES.MATCH]
-        ];
-        
-        // 模拟状态变量
-        let simulationState = {
-            running: false,
-            round: 0,
-            speed: 1500, // 中等速度
-            speedLevel: 1, // 0:慢, 1:中, 2:快
-            inProgress: false // 是否正在执行一步
-        };
-        
-        // DOM元素
-        const startBtn = document.getElementById('startBtn');
-        const stepBtn = document.getElementById('stepBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const speedBtn = document.getElementById('speedBtn');
-        const speedText = document.getElementById('speedText');
-        const statusText = document.getElementById('statusText');
-        const roundCounter = document.getElementById('roundCounter');
-        const tableResources = document.getElementById('tableResources');
-        const agentStatus = document.getElementById('agentStatus');
-        const logContainer = document.getElementById('logContainer');
-        const transferContainer = document.getElementById('transferContainer');
-        
-        // 初始化事件监听
-        function initEventListeners() {
-            startBtn.addEventListener('click', toggleSimulation);
-            stepBtn.addEventListener('click', executeStep);
-            resetBtn.addEventListener('click', resetSimulation);
-            speedBtn.addEventListener('click', changeSpeed);
-        }
-        
-        // 切换模拟运行状态
-        function toggleSimulation() {
-            if (simulationState.running) {
-                stopSimulation();
+        // -------------------------- 通用工具函数 --------------------------
+        // 添加日志
+        function addLog(logAreaId, content, type = 'system', scheme = 'parnas') {
+            const logArea = document.getElementById(logAreaId);
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-CN', { hour12: false });
+            const logItem = document.createElement('div');
+            logItem.className = `log-item log-${type} mb-2 p-3 rounded-lg fade-in`;
+            
+            // 按方案区分日志样式
+            if (type === 'agent') {
+                if (scheme === 'deadlock') logItem.classList.add('bg-red-50', 'border-l-4', 'border-danger');
+                if (scheme === 'parnas') logItem.classList.add('bg-blue-50', 'border-l-4', 'border-primary');
+                if (scheme === 'petri') logItem.classList.add('bg-purple-50', 'border-l-4', 'border-petri');
+            } else if (type === 'smoker') {
+                logItem.classList.add('bg-green-50', 'border-l-4', 'border-secondary');
+            } else if (type === 'deadlock') {
+                logItem.classList.add('bg-red-50', 'border-l-4', 'border-danger', 'text-danger');
             } else {
-                startSimulation();
+                logItem.classList.add('bg-gray-50', 'border-l-4', 'border-gray-300', 'text-gray-600');
             }
+            
+            logItem.innerHTML = `<span class="log-time text-gray-400 mr-2">[${timeStr}]</span> ${content}`;
+            logArea.appendChild(logItem);
+            logArea.scrollTop = logArea.scrollHeight;
         }
-        
-        // 开始模拟
-        function startSimulation() {
-            if (simulationState.inProgress) return;
-            
-            simulationState.running = true;
-            startBtn.innerHTML = '<i class="fa fa-pause"></i> 暂停模拟';
-            statusText.textContent = '模拟正在运行...';
-            log('模拟开始');
-            
-            // 如果当前没有资源在桌上，立即执行一步
-            if (tableResources.children.length <= 1) {
-                executeStep();
-            }
-        }
-        
-        // 停止模拟
-        function stopSimulation() {
-            simulationState.running = false;
-            startBtn.innerHTML = '<i class="fa fa-play"></i> 继续模拟';
-            statusText.textContent = '模拟已暂停';
-            log('模拟暂停');
-        }
-        
-        // 重置模拟
-        function resetSimulation() {
-            simulationState.running = false;
-            simulationState.round = 0;
-            simulationState.inProgress = false;
-            
-            startBtn.innerHTML = '<i class="fa fa-play"></i> 开始模拟';
-            statusText.textContent = '准备就绪，请点击"开始模拟"或"单步执行"';
-            roundCounter.textContent = '0';
-            agentStatus.textContent = '等待开始...';
-            
-            // 清空桌子
-            tableResources.innerHTML = '<div class="text-gray-400 italic">等待放置资源...</div>';
-            
-            // 重置吸烟者状态
-            Object.values(SMOKERS).forEach(smoker => {
-                document.getElementById(smoker.id).classList.remove('smoker-active');
-                smoker.statusElement.classList.add('hidden');
-            });
-            
-            // 清空日志
-            logContainer.innerHTML = '<div class="text-gray-500 italic">模拟开始后，日志将显示在这里...</div>';
-            log('模拟已重置');
-        }
-        
-        // 改变速度
-        function changeSpeed() {
-            // 循环切换速度: 慢 -> 中 -> 快 -> 慢...
-            simulationState.speedLevel = (simulationState.speedLevel + 1) % 3;
-            
-            switch (simulationState.speedLevel) {
-                case 0:
-                    simulationState.speed = 3000;
-                    speedText.textContent = '慢速';
-                    log('模拟速度设置为: 慢速');
-                    break;
-                case 1:
-                    simulationState.speed = 1500;
-                    speedText.textContent = '中等';
-                    log('模拟速度设置为: 中等');
-                    break;
-                case 2:
-                    simulationState.speed = 700;
-                    speedText.textContent = '快速';
-                    log('模拟速度设置为: 快速');
-                    break;
-            }
-        }
-        
-        // 执行一步模拟
-        function executeStep() {
-            if (simulationState.inProgress) return;
-            
-            simulationState.inProgress = true;
-            stepBtn.disabled = true;
-            
-            // 增加轮次计数
-            simulationState.round++;
-            roundCounter.textContent = simulationState.round;
-            
-            // 代理人选择两种资源
-            agentStatus.textContent = '正在选择资源...';
-            statusText.textContent = `第 ${simulationState.round} 轮: 代理人正在选择资源`;
-            log(`第 ${simulationState.round} 轮开始: 代理人正在选择资源`);
-            
-            setTimeout(() => {
-                // 随机选择一种资源组合
-                const combination = RESOURCE_COMBINATIONS[Math.floor(Math.random() * RESOURCE_COMBINATIONS.length)];
+
+        // 创建资源动画（代理→桌面）
+        function animateResourceToTable(schemePrefix, resourceType) {
+            return new Promise((resolve) => {
+                const agentArea = document.getElementById(`${schemePrefix}-agent-area`);
+                const cellEl = document.getElementById(`${schemePrefix}-${resourceType}-cell`);
+                const animationContainer = document.getElementById('resource-animation-container');
                 
-                // 显示代理人放置资源
-                agentStatus.textContent = `已放置: ${combination[0].name} 和 ${combination[1].name}`;
-                statusText.textContent = `第 ${simulationState.round} 轮: 代理人放置了 ${combination[0].name} 和 ${combination[1].name}`;
-                log(`代理人放置了: ${combination[0].name} 和 ${combination[1].name}`);
+                // 获取相对于视口的位置（解决滚动问题）
+                const agentRect = agentArea.getBoundingClientRect();
+                const cellRect = cellEl.getBoundingClientRect();
                 
-                // 在桌上显示资源
-                displayResourcesOnTable(combination);
+                // 创建资源元素
+                const resourceEl = document.createElement('div');
+                resourceEl.className = 'resource-item';
+                resourceEl.dataset.scheme = schemePrefix;
+                resourceEl.dataset.type = resourceType;
                 
-                // 查找匹配的吸烟者
+                if (resourceType === 'tobacco') {
+                    resourceEl.innerHTML = '🌿';
+                    resourceEl.classList.add('text-green-600', 'text-2xl');
+                } else if (resourceType === 'paper') {
+                    resourceEl.innerHTML = '📄';
+                    resourceEl.classList.add('text-gray-600', 'text-2xl');
+                } else {
+                    resourceEl.innerHTML = '🔥';
+                    resourceEl.classList.add('text-orange-500', 'text-2xl');
+                }
+                
+                // 初始位置（代理中心）
+                resourceEl.style.left = `${agentRect.left + agentRect.width / 2}px`;
+                resourceEl.style.top = `${agentRect.top + agentRect.height / 2}px`;
+                animationContainer.appendChild(resourceEl);
+                
+                // 动画到桌面格子
                 setTimeout(() => {
-                    const smoker = findMatchingSmoker(combination);
+                    resourceEl.style.left = `${cellRect.left + cellRect.width / 2}px`;
+                    resourceEl.style.top = `${cellRect.top + cellRect.height / 2}px`;
+                    resourceEl.classList.add('resource-to-table');
                     
-                    if (smoker) {
-                        // 高亮显示匹配的吸烟者
-                        statusText.textContent = `第 ${simulationState.round} 轮: 吸烟者${smoker.id} 可以吸烟`;
-                        log(`吸烟者${smoker.id} 匹配所需资源，准备吸烟`);
-                        
-                        const smokerElement = document.getElementById(smoker.id);
-                        smokerElement.classList.add('smoker-active');
-                        smoker.statusElement.classList.remove('hidden');
-                        
-                        // 资源转移动画
-                        animateResourceTransfer(combination, smoker);
-                        
-                        // 吸烟过程
-                        setTimeout(() => {
-                            // 清除桌上的资源
-                            tableResources.innerHTML = '<div class="text-gray-400 italic">等待放置资源...</div>';
-                            
-                            // 重置吸烟者状态
-                            smokerElement.classList.remove('smoker-active');
-                            smoker.statusElement.classList.add('hidden');
-                            
-                            agentStatus.textContent = '等待吸烟者通知...';
-                            statusText.textContent = `第 ${simulationState.round} 轮: 吸烟者${smoker.id} 正在吸烟`;
-                            log(`吸烟者${smoker.id} 正在吸烟`);
-                            
-                            // 吸烟完成
-                            setTimeout(() => {
-                                agentStatus.textContent = '收到完成通知，准备下一轮';
-                                statusText.textContent = `第 ${simulationState.round} 轮: 吸烟者${smoker.id} 吸烟完成，通知代理人`;
-                                log(`吸烟者${smoker.id} 吸烟完成，通知代理人`);
-                                
-                                simulationState.inProgress = false;
-                                stepBtn.disabled = false;
-                                
-                                // 如果模拟仍在运行，继续下一轮
-                                if (simulationState.running) {
-                                    setTimeout(executeStep, 500);
-                                }
-                            }, simulationState.speed * 0.8);
-                        }, simulationState.speed * 0.5);
-                    } else {
-                        // 理论上不会走到这里，因为总会有一个匹配的吸烟者
-                        statusText.textContent = '错误: 没有找到匹配的吸烟者';
-                        log('错误: 没有找到匹配的吸烟者');
-                        simulationState.inProgress = false;
-                        stepBtn.disabled = false;
-                    }
-                }, simulationState.speed * 0.5);
-            }, simulationState.speed * 0.3);
-        }
-        
-        // 在桌上显示资源
-        function displayResourcesOnTable(resources) {
-            tableResources.innerHTML = '';
-            
-            resources.forEach(resource => {
-                const resourceElement = document.createElement('div');
-                resourceElement.className = `w-16 h-16 rounded-full ${resource.class} flex items-center justify-center resource-appear floating`;
-                resourceElement.innerHTML = `<i class="fa ${resource.icon} text-2xl"></i>`;
-                resourceElement.title = resource.name;
-                tableResources.appendChild(resourceElement);
+                    // 动画完成：显示格子资源
+                    setTimeout(() => {
+                        const contentEl = document.getElementById(`${schemePrefix}-${resourceType}-content`);
+                        contentEl.classList.remove('opacity-0');
+                        contentEl.classList.add('opacity-100');
+                        cellEl.classList.add('filled');
+                        if (schemePrefix === 'pt') cellEl.classList.add('petri-filled');
+                        resolve(resourceEl);
+                    }, 800);
+                }, 50);
             });
         }
-        
-        // 查找匹配的吸烟者（需要桌上的两种资源）
-        function findMatchingSmoker(resources) {
-            // 检查每种资源组合是否与吸烟者所需资源匹配
-            for (const key in SMOKERS) {
-                const smoker = SMOKERS[key];
-                // 检查吸烟者是否需要这两种资源（顺序无关）
-                if (
-                    (smoker.needs[0] === resources[0] && smoker.needs[1] === resources[1]) ||
-                    (smoker.needs[0] === resources[1] && smoker.needs[1] === resources[0])
-                ) {
-                    return smoker;
+
+        // 创建资源动画（桌面→吸烟者）
+        function animateResourceToSmoker(resourceEl, schemePrefix, smokerId) {
+            return new Promise((resolve) => {
+                const resourceType = resourceEl.dataset.type;
+                const smokerArea = document.getElementById(`${schemePrefix}-smoker${smokerId}-area`);
+                const cellEl = document.getElementById(`${schemePrefix}-${resourceType}-cell`);
+                const contentEl = document.getElementById(`${schemePrefix}-${resourceType}-content`);
+                
+                // 隐藏格子资源
+                contentEl.classList.remove('opacity-100');
+                contentEl.classList.add('opacity-0');
+                cellEl.classList.remove('filled', 'petri-filled');
+                
+                const smokerRect = smokerArea.getBoundingClientRect();
+                
+                // 动画到吸烟者
+                resourceEl.classList.remove('resource-to-table');
+                setTimeout(() => {
+                    resourceEl.classList.add('resource-to-smoker');
+                    resourceEl.style.left = `${smokerRect.left + smokerRect.width / 2}px`;
+                    resourceEl.style.top = `${smokerRect.top + smokerRect.height / 2}px`;
+                    
+                    // 资源消失
+                    setTimeout(() => {
+                        resourceEl.classList.add('resource-disappear');
+                        setTimeout(() => {
+                            if (resourceEl.parentNode) resourceEl.parentNode.removeChild(resourceEl);
+                            resolve();
+                        }, 300);
+                    }, 800);
+                }, 50);
+            });
+        }
+
+        // 监听滚动事件，更新资源位置
+        function setupScrollHandler() {
+            window.addEventListener('scroll', updateResourcePositions);
+        }
+
+        // 更新所有资源元素的位置（解决滚动问题）
+        function updateResourcePositions() {
+            const resources = document.querySelectorAll('.resource-item');
+            resources.forEach(resource => {
+                const scheme = resource.dataset.scheme;
+                const type = resource.dataset.type;
+                
+                // 检查资源当前应该在哪个位置
+                if (resource.classList.contains('resource-to-table')) {
+                    // 资源应该在桌面格子
+                    const cellEl = document.getElementById(`${scheme}-${type}-cell`);
+                    const cellRect = cellEl.getBoundingClientRect();
+                    resource.style.left = `${cellRect.left + cellRect.width / 2}px`;
+                    resource.style.top = `${cellRect.top + cellRect.height / 2}px`;
+                } else if (resource.classList.contains('resource-to-smoker')) {
+                    // 资源应该在吸烟者处（通过data属性获取吸烟者ID）
+                    const smokerId = resource.dataset.smoker;
+                    if (smokerId) {
+                        const smokerArea = document.getElementById(`${scheme}-smoker${smokerId}-area`);
+                        const smokerRect = smokerArea.getBoundingClientRect();
+                        resource.style.left = `${smokerRect.left + smokerRect.width / 2}px`;
+                        resource.style.top = `${smokerRect.top + smokerRect.height / 2}px`;
+                    }
+                }
+            });
+        }
+
+        // -------------------------- 方案1：传统信号量（有死锁） --------------------------
+        const DL = {
+            isRunning: false,
+            speed: 5,
+            count: { A: 0, B: 0, C: 0 },
+            semaphores: { paper: 0, match: 0, tobacco: 0, agent: 1 }, // 信号量初始值
+            timers: { agent: null, smoke: null },
+            isDeadlock: false,
+            waiting: { A: { hold: null, wait: null }, B: { hold: null, wait: null }, C: { hold: null, wait: null } },
+            
+            // 初始化
+            init() {
+                this.bindEvents();
+                this.updateDOM();
+            },
+            
+            // 绑定事件
+            bindEvents() {
+                // 控制按钮
+                document.getElementById('dl-startBtn').addEventListener('click', () => this.start());
+                document.getElementById('dl-pauseBtn').addEventListener('click', () => this.pause());
+                document.getElementById('dl-resetBtn').addEventListener('click', () => this.reset());
+                
+                // 速度控制
+                document.getElementById('dl-speedControl').addEventListener('input', (e) => {
+                    this.speed = parseInt(e.target.value);
+                    const speedText = this.getSpeedText();
+                    document.getElementById('dl-speedValue').textContent = speedText;
+                    addLog('dl-log-area', `系统：模拟速度调整为${speedText}`, 'system', 'deadlock');
+                });
+            },
+            
+            // 获取速度文本
+            getSpeedText() {
+                if (this.speed <= 2) return '极慢';
+                if (this.speed <= 4) return '慢速';
+                if (this.speed <= 6) return '中等';
+                if (this.speed <= 8) return '快速';
+                return '极快';
+            },
+            
+            // 开始模拟
+            start() {
+                if (this.isRunning || this.isDeadlock) return;
+                this.isRunning = true;
+                document.getElementById('dl-startBtn').disabled = true;
+                document.getElementById('dl-startBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('dl-pauseBtn').disabled = false;
+                document.getElementById('dl-pauseBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+                
+                addLog('dl-log-area', '系统：传统信号量方案模拟开始（易触发死锁）', 'system', 'deadlock');
+                const delay = 1000 - (this.speed - 1) * 80;
+                this.timers.agent = setTimeout(() => this.agentPutResources(), delay);
+                this.updateDOM();
+            },
+            
+            // 暂停模拟
+            pause() {
+                if (!this.isRunning || this.isDeadlock) return;
+                this.isRunning = false;
+                document.getElementById('dl-startBtn').disabled = false;
+                document.getElementById('dl-startBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('dl-pauseBtn').disabled = true;
+                document.getElementById('dl-pauseBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                
+                clearTimeout(this.timers.agent);
+                if (this.timers.smoke) clearTimeout(this.timers.smoke);
+                addLog('dl-log-area', '系统：模拟暂停', 'system', 'deadlock');
+                this.updateDOM();
+            },
+            
+            // 重置模拟
+            reset() {
+                this.isRunning = false;
+                this.isDeadlock = false;
+                this.count = { A: 0, B: 0, C: 0 };
+                this.semaphores = { paper: 0, match: 0, tobacco: 0, agent: 1 };
+                this.waiting = { A: { hold: null, wait: null }, B: { hold: null, wait: null }, C: { hold: null, wait: null } };
+                
+                // 清除定时器和动画
+                clearTimeout(this.timers.agent);
+                if (this.timers.smoke) clearTimeout(this.timers.smoke);
+                const animations = document.querySelectorAll('[data-scheme="dl"]');
+                animations.forEach(el => el.remove());
+                
+                // 重置UI
+                document.getElementById('dl-deadlock-alert').classList.add('hidden');
+                document.getElementById('dl-startBtn').disabled = false;
+                document.getElementById('dl-startBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('dl-pauseBtn').disabled = true;
+                document.getElementById('dl-pauseBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                
+                // 重置资源格子
+                ['tobacco', 'paper', 'match'].forEach(r => {
+                    const cell = document.getElementById(`dl-${r}-cell`);
+                    const content = document.getElementById(`dl-${r}-content`);
+                    cell.classList.remove('filled');
+                    content.classList.remove('opacity-100');
+                    content.classList.add('opacity-0');
+                });
+                
+                // 重置日志
+                document.getElementById('dl-log-area').innerHTML = `
+                    <div class="log-item log-system fade-in">
+                        <span class="log-time text-gray-400">[系统初始化]</span>
+                        <span>传统信号量方案就绪，点击「开始模拟」启动（易触发死锁）</span>
+                    </div>
+                `;
+                
+                this.updateDOM();
+                addLog('dl-log-area', '系统：模拟已重置', 'system', 'deadlock');
+            },
+            
+            // 代理投放资源（随机两种）
+            agentPutResources() {
+                if (!this.isRunning || this.isDeadlock) return;
+                
+                // P操作：代理等待（确保一次只有一个投放）
+                if (this.semaphores.agent <= 0) {
+                    this.timers.agent = setTimeout(() => this.agentPutResources(), 200);
+                    return;
+                }
+                this.semaphores.agent--;
+                
+                // 随机选择两种资源
+                const resources = ['tobacco', 'paper', 'match'];
+                const excludeIdx = Math.floor(Math.random() * 3);
+                const putResources = resources.filter((_, idx) => idx !== excludeIdx);
+                
+                // V操作：释放资源信号量
+                putResources.forEach(r => this.semaphores[r]++);
+                addLog('dl-log-area', `代理：投放资源【${this.getResourceName(putResources)}】，${this.getSemLog()}`, 'agent', 'deadlock');
+                
+                // 执行投放动画
+                const animatePromises = putResources.map(r => animateResourceToTable('dl', r));
+                Promise.all(animatePromises).then(() => {
+                    // 通知吸烟者竞争资源（非原子性）
+                    this.notifySmokers(putResources);
+                });
+            },
+            
+            // 通知吸烟者竞争资源（核心：非原子性导致死锁）
+            notifySmokers(putResources) {
+                if (this.isDeadlock) return;
+                
+                // 模拟吸烟者竞争（随机顺序，非原子）
+                const smokers = ['A', 'B', 'C'];
+                smokers.sort(() => Math.random() - 0.5); // 随机排序，模拟竞争
+                
+                smokers.forEach(smokerId => {
+                    if (this.isDeadlock) return;
+                    const need = this.getSmokerNeed(smokerId);
+                    // 检查是否需要当前投放的资源
+                    const hasAllNeed = need.every(r => putResources.includes(r));
+                    if (!hasAllNeed) return;
+                    
+                    // 尝试获取资源（非原子P操作）
+                    let gotOne = false;
+                    need.forEach(r => {
+                        if (this.semaphores[r] > 0) {
+                            this.semaphores[r]--;
+                            this.waiting[smokerId].hold = r; // 记录持有资源
+                            gotOne = true;
+                            addLog('dl-log-area', `吸烟者${smokerId}：获取${this.getResourceName([r])}（${this.getSemLog()}）`, 'smoker', 'deadlock');
+                        }
+                    });
+                    
+                    // 检查是否获取全部资源
+                    const hasAll = need.every(r => this.semaphores[r] === 0 && this.waiting[smokerId].hold === r);
+                    if (hasAll) {
+                        this.startSmoke(smokerId, need);
+                    } else if (gotOne) {
+                        // 持有一个资源，等待另一个（可能死锁）
+                        this.waiting[smokerId].wait = need.find(r => this.semaphores[r] > 0 || this.waiting[smokerId].hold !== r);
+                        addLog('dl-log-area', `吸烟者${smokerId}：持有${this.getResourceName([this.waiting[smokerId].hold])}，等待${this.getResourceName([this.waiting[smokerId].wait])}`, 'smoker', 'deadlock');
+                        this.checkDeadlock(); // 检查死锁
+                    }
+                });
+            },
+            
+            // 检查死锁（条件：至少两个吸烟者互相等待）
+            checkDeadlock() {
+                const waitingList = Object.entries(this.waiting).filter(([_, w]) => w.hold && w.wait);
+                if (waitingList.length < 2) return;
+                
+                // 死锁条件：A等B的资源，B等A的资源
+                const [a, aWait] = waitingList[0];
+                const [b, bWait] = waitingList[1];
+                if (aWait.wait === bWait.hold && bWait.wait === aWait.hold) {
+                    this.isDeadlock = true;
+                    document.getElementById('dl-deadlock-alert').classList.remove('hidden');
+                    addLog('dl-log-area', `死锁：吸烟者${a}（持${this.getResourceName([aWait.hold])}等${this.getResourceName([aWait.wait])}）与吸烟者${b}（持${this.getResourceName([bWait.hold])}等${this.getResourceName([bWait.wait])}）互相等待`, 'deadlock', 'deadlock');
+                    this.pause();
+                }
+            },
+            
+            // 开始吸烟
+            startSmoke(smokerId, need) {
+                if (this.isDeadlock) return;
+                
+                // 更新状态
+                this.waiting[smokerId] = { hold: null, wait: null };
+                document.getElementById(`dl-smoker${smokerId}State`).textContent = '吸烟中...';
+                document.getElementById(`dl-smoker${smokerId}StatusBadge`).className = 'px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium';
+                document.getElementById(`dl-smoker${smokerId}StatusBadge`).textContent = '吸烟中';
+                
+                // 执行资源动画（桌面→吸烟者）
+                const resourceEls = document.querySelectorAll(`[data-scheme="dl"][data-type="${need[0]}"], [data-scheme="dl"][data-type="${need[1]}"]`);
+                // 为资源添加吸烟者ID属性，用于滚动时定位
+                resourceEls.forEach(el => el.dataset.smoker = smokerId);
+                const animatePromises = Array.from(resourceEls).map(el => animateResourceToSmoker(el, 'dl', smokerId));
+                
+                Promise.all(animatePromises).then(() => {
+                    // 吸烟完成
+                    const smokeTime = 2000 - (this.speed - 1) * 150;
+                    this.timers.smoke = setTimeout(() => {
+                        this.count[smokerId]++;
+                        addLog('dl-log-area', `吸烟者${smokerId}：吸烟完成（累计${this.count[smokerId]}次），通知代理`, 'smoker', 'deadlock');
+                        
+                        // V操作：释放代理信号量
+                        this.semaphores.agent++;
+                        
+                        // 重置吸烟者状态
+                        document.getElementById(`dl-smoker${smokerId}State`).textContent = '等待资源';
+                        document.getElementById(`dl-smoker${smokerId}StatusBadge`).className = 'px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium';
+                        document.getElementById(`dl-smoker${smokerId}StatusBadge`).textContent = '等待';
+                        
+                        // 继续下一轮
+                        if (this.isRunning) {
+                            const delay = 1000 - (this.speed - 1) * 80;
+                            this.timers.agent = setTimeout(() => this.agentPutResources(), delay);
+                        }
+                        this.updateDOM();
+                    }, smokeTime);
+                });
+            },
+            
+            // 辅助：获取资源名称
+            getResourceName(resources) {
+                return resources.map(r => {
+                    return r === 'tobacco' ? '烟草' : r === 'paper' ? '纸' : '火柴';
+                }).join('+');
+            },
+            
+            // 辅助：获取信号量日志
+            getSemLog() {
+                return `信号量：paper=${this.semaphores.paper}, match=${this.semaphores.match}, tobacco=${this.semaphores.tobacco}, agent=${this.semaphores.agent}`;
+            },
+            
+            // 辅助：获取吸烟者需求
+            getSmokerNeed(smokerId) {
+                if (smokerId === 'A') return ['paper', 'match']; // 持烟草，需纸+火柴
+                if (smokerId === 'B') return ['tobacco', 'match']; // 持纸，需烟草+火柴
+                return ['tobacco', 'paper']; // 持火柴，需烟草+纸
+            },
+            
+            // 更新DOM
+            updateDOM() {
+                // 更新信号量显示
+                document.getElementById('dl-paper-sem').textContent = this.semaphores.paper;
+                document.getElementById('dl-match-sem').textContent = this.semaphores.match;
+                document.getElementById('dl-tobacco-sem').textContent = this.semaphores.tobacco;
+                document.getElementById('dl-agent-sem').textContent = this.semaphores.agent;
+                
+                // 更新计数
+                document.getElementById('dl-smokerACount').textContent = this.count.A;
+                document.getElementById('dl-smokerBCount').textContent = this.count.B;
+                document.getElementById('dl-smokerCCount').textContent = this.count.C;
+                
+                // 更新代理状态
+                if (this.isRunning) {
+                    document.getElementById('dl-agentState').textContent = this.semaphores.agent > 0 ? '等待投放' : '投放中';
+                    document.getElementById('dl-agentStatusBadge').className = 'px-2 py-1 bg-red-100 text-danger rounded-full text-xs font-medium';
+                    document.getElementById('dl-agentStatusBadge').textContent = '运行中';
+                } else if (this.isDeadlock) {
+                    document.getElementById('dl-agentState').textContent = '死锁状态';
+                    document.getElementById('dl-agentStatusBadge').className = 'px-2 py-1 bg-red-100 text-danger rounded-full text-xs font-medium';
+                    document.getElementById('dl-agentStatusBadge').textContent = '死锁';
+                } else {
+                    document.getElementById('dl-agentState').textContent = '已暂停';
+                    document.getElementById('dl-agentStatusBadge').className = 'px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium';
+                    document.getElementById('dl-agentStatusBadge').textContent = '已暂停';
                 }
             }
-            return null;
-        }
-        
-        // 资源从桌子转移到吸烟者的动画
-        function animateResourceTransfer(resources, smoker) {
-            // 获取桌子和吸烟者的位置信息
-            const tableRect = tableResources.getBoundingClientRect();
-            const smokerRect = document.getElementById(smoker.id).getBoundingClientRect();
-            const containerRect = transferContainer.getBoundingClientRect();
+        };
+
+        // -------------------------- 方案2：Parnas辅助进程（无死锁） --------------------------
+        const PN = {
+            isRunning: false,
+            speed: 5,
+            count: { A: 0, B: 0, C: 0 },
+            tableResources: { tobacco: false, paper: false, match: false },
+            agentState: 'waiting', // waiting/running
+            smokerStates: { A: 'waiting', B: 'waiting', C: 'waiting' }, // waiting/running
+            timers: { agent: null, smoke: null },
             
-            // 计算转移的目标位置
-            const tx = smokerRect.left - containerRect.left - (tableRect.width / 2);
-            const ty = smokerRect.top - containerRect.top - (tableRect.height / 2);
+            // 初始化
+            init() {
+                this.bindEvents();
+                this.updateDOM();
+            },
             
-            // 创建资源副本用于动画
-            resources.forEach((resource, index) => {
-                const offset = (index === 0) ? -30 : 30; // 两个资源稍微错开一点
+            // 绑定事件
+            bindEvents() {
+                // 控制按钮
+                document.getElementById('pn-startBtn').addEventListener('click', () => this.start());
+                document.getElementById('pn-pauseBtn').addEventListener('click', () => this.pause());
+                document.getElementById('pn-resetBtn').addEventListener('click', () => this.reset());
                 
-                const resourceClone = document.createElement('div');
-                resourceClone.className = `w-16 h-16 rounded-full ${resource.class} flex items-center justify-center absolute`;
-                resourceClone.innerHTML = `<i class="fa ${resource.icon} text-2xl"></i>`;
-                resourceClone.style.left = `${tableRect.width / 2 + offset}px`;
-                resourceClone.style.top = `${tableRect.height / 2}px`;
-                resourceClone.style.setProperty('--tx', `${tx + offset}px`);
-                resourceClone.style.setProperty('--ty', `${ty}px`);
-                
-                transferContainer.appendChild(resourceClone);
-                
-                // 触发动画
-                setTimeout(() => {
-                    resourceClone.classList.add('transfer');
-                }, 10);
-                
-                // 动画结束后移除元素
-                setTimeout(() => {
-                    resourceClone.remove();
-                }, 1000);
-            });
-        }
-        
-        // 添加日志条目
-        function log(message) {
-            const logEntry = document.createElement('div');
-            logEntry.className = 'log-entry';
+                // 速度控制
+                document.getElementById('pn-speedControl').addEventListener('input', (e) => {
+                    this.speed = parseInt(e.target.value);
+                    const speedText = this.getSpeedText();
+                    document.getElementById('pn-speedValue').textContent = speedText;
+                    addLog('pn-log-area', `系统：模拟速度调整为${speedText}`, 'system', 'parnas');
+                });
+            },
             
-            // 添加时间戳
-            const now = new Date();
-            const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            // 获取速度文本
+            getSpeedText() {
+                if (this.speed <= 2) return '极慢';
+                if (this.speed <= 4) return '慢速';
+                if (this.speed <= 6) return '中等';
+                if (this.speed <= 8) return '快速';
+                return '极快';
+            },
             
-            logEntry.innerHTML = `<span class="text-gray-500">[${timeString}]</span> ${message}`;
+            // 开始模拟
+            start() {
+                if (this.isRunning) return;
+                this.isRunning = true;
+                document.getElementById('pn-startBtn').disabled = true;
+                document.getElementById('pn-startBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('pn-pauseBtn').disabled = false;
+                document.getElementById('pn-pauseBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+                
+                addLog('pn-log-area', '系统：Parnas辅助进程方案模拟开始（无死锁）', 'system', 'parnas');
+                const delay = 1000 - (this.speed - 1) * 80;
+                this.timers.agent = setTimeout(() => this.agentPutResources(), delay);
+                this.updateDOM();
+            },
             
-            // 如果是初始状态，先清空
-            if (logContainer.innerHTML.includes('模拟开始后，日志将显示在这里...')) {
-                logContainer.innerHTML = '';
+            // 暂停模拟
+            pause() {
+                if (!this.isRunning) return;
+                this.isRunning = false;
+                document.getElementById('pn-startBtn').disabled = false;
+                document.getElementById('pn-startBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('pn-pauseBtn').disabled = true;
+                document.getElementById('pn-pauseBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                
+                clearTimeout(this.timers.agent);
+                if (this.timers.smoke) clearTimeout(this.timers.smoke);
+                addLog('pn-log-area', '系统：模拟暂停', 'system', 'parnas');
+                this.updateDOM();
+            },
+            
+            // 重置模拟
+            reset() {
+                this.isRunning = false;
+                this.count = { A: 0, B: 0, C: 0 };
+                this.tableResources = { tobacco: false, paper: false, match: false };
+                this.agentState = 'waiting';
+                this.smokerStates = { A: 'waiting', B: 'waiting', C: 'waiting' };
+                
+                // 清除定时器和动画
+                clearTimeout(this.timers.agent);
+                if (this.timers.smoke) clearTimeout(this.timers.smoke);
+                const animations = document.querySelectorAll('[data-scheme="pn"]');
+                animations.forEach(el => el.remove());
+                
+                // 重置UI
+                document.getElementById('pn-startBtn').disabled = false;
+                document.getElementById('pn-startBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('pn-pauseBtn').disabled = true;
+                document.getElementById('pn-pauseBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                
+                // 重置资源格子
+                ['tobacco', 'paper', 'match'].forEach(r => {
+                    const cell = document.getElementById(`pn-${r}-cell`);
+                    const content = document.getElementById(`pn-${r}-content`);
+                    cell.classList.remove('filled');
+                    content.classList.remove('opacity-100');
+                    content.classList.add('opacity-0');
+                });
+                
+                // 重置日志
+                document.getElementById('pn-log-area').innerHTML = `
+                    <div class="log-item log-system fade-in">
+                        <span class="log-time text-gray-400">[系统初始化]</span>
+                        <span>Parnas方案就绪，点击「开始模拟」启动（无死锁）</span>
+                    </div>
+                `;
+                
+                this.updateDOM();
+                addLog('pn-log-area', '系统：模拟已重置', 'system', 'parnas');
+            },
+            
+            // 代理投放资源（随机两种）
+            agentPutResources() {
+                if (!this.isRunning) return;
+                
+                // 清除现有资源
+                this.tableResources = { tobacco: false, paper: false, match: false };
+                ['tobacco', 'paper', 'match'].forEach(r => {
+                    const cell = document.getElementById(`pn-${r}-cell`);
+                    const content = document.getElementById(`pn-${r}-content`);
+                    cell.classList.remove('filled');
+                    content.classList.remove('opacity-100');
+                    content.classList.add('opacity-0');
+                });
+                
+                // 更新状态
+                this.agentState = 'running';
+                addLog('pn-log-area', '代理：开始投放资源', 'agent', 'parnas');
+                this.updateDOM();
+                
+                // 随机选择两种资源
+                const resources = ['tobacco', 'paper', 'match'];
+                const excludeIdx = Math.floor(Math.random() * 3);
+                const putResources = resources.filter((_, idx) => idx !== excludeIdx);
+                
+                // 设置桌面资源状态
+                putResources.forEach(r => this.tableResources[r] = true);
+                
+                // 执行投放动画
+                const animatePromises = putResources.map(r => animateResourceToTable('pn', r));
+                Promise.all(animatePromises).then(() => {
+                    // 记录投放日志
+                    const resourceNames = this.getResourceName(putResources);
+                    addLog('pn-log-area', `代理：投放资源【${resourceNames}】，辅助进程检测中`, 'agent', 'parnas');
+                    
+                    // 代理切换为等待状态
+                    this.agentState = 'waiting';
+                    this.updateDOM();
+
+                    // 辅助进程原子性检测资源组合
+                    const delay = 500 - (this.speed - 1) * 40;
+                    setTimeout(() => this.checkResourcesAndWake(), delay);
+                });
+            },
+            
+            // 辅助进程：原子性检测资源组合并唤醒对应吸烟者
+            checkResourcesAndWake() {
+                if (!this.isRunning) return;
+                
+                // 原子性检测三种可能的资源组合
+                if (this.tableResources.paper && this.tableResources.match && this.smokerStates.A === 'waiting') {
+                    // 纸+火柴 → 唤醒吸烟者A
+                    this.wakeSmoker('A', ['paper', 'match']);
+                } else if (this.tableResources.tobacco && this.tableResources.match && this.smokerStates.B === 'waiting') {
+                    // 烟草+火柴 → 唤醒吸烟者B
+                    this.wakeSmoker('B', ['tobacco', 'match']);
+                } else if (this.tableResources.tobacco && this.tableResources.paper && this.smokerStates.C === 'waiting') {
+                    // 烟草+纸 → 唤醒吸烟者C
+                    this.wakeSmoker('C', ['tobacco', 'paper']);
+                }
+            },
+            
+            // 唤醒吸烟者并执行吸烟流程
+            wakeSmoker(smokerId, resources) {
+                if (!this.isRunning) return;
+                
+                // 更新状态
+                this.smokerStates[smokerId] = 'running';
+                const resourceNames = this.getResourceName(resources);
+                addLog('pn-log-area', `吸烟者${smokerId}：获取资源【${resourceNames}】，开始吸烟`, 'smoker', 'parnas');
+                this.updateDOM();
+
+                // 执行资源动画（桌面→吸烟者）
+                const resourceEls = document.querySelectorAll(`[data-scheme="pn"][data-type="${resources[0]}"], [data-scheme="pn"][data-type="${resources[1]}"]`);
+                // 为资源添加吸烟者ID属性，用于滚动时定位
+                resourceEls.forEach(el => el.dataset.smoker = smokerId);
+                const animatePromises = Array.from(resourceEls).map(el => animateResourceToSmoker(el, 'pn', smokerId));
+                
+                Promise.all(animatePromises).then(() => {
+                    // 清空桌面资源
+                    resources.forEach(r => this.tableResources[r] = false);
+                    
+                    // 模拟吸烟时间
+                    const smokeTime = 2000 - (this.speed - 1) * 150;
+                    this.timers.smoke = setTimeout(() => {
+                        // 吸烟完成
+                        this.count[smokerId]++;
+                        this.smokerStates[smokerId] = 'waiting';
+                        addLog('pn-log-area', `吸烟者${smokerId}：吸烟完成（累计${this.count[smokerId]}次），通知代理继续`, 'smoker', 'parnas');
+                        
+                        // 继续下一轮
+                        if (this.isRunning) {
+                            const delay = 1000 - (this.speed - 1) * 80;
+                            this.timers.agent = setTimeout(() => this.agentPutResources(), delay);
+                        }
+                        this.updateDOM();
+                    }, smokeTime);
+                });
+            },
+            
+            // 辅助：获取资源名称
+            getResourceName(resources) {
+                return resources.map(r => {
+                    return r === 'tobacco' ? '烟草' : r === 'paper' ? '纸' : '火柴';
+                }).join('+');
+            },
+            
+            // 更新DOM
+            updateDOM() {
+                // 更新辅助进程状态显示
+                document.getElementById('pn-isTobacco').textContent = this.tableResources.tobacco;
+                document.getElementById('pn-isPaper').textContent = this.tableResources.paper;
+                document.getElementById('pn-isMatch').textContent = this.tableResources.match;
+                
+                // 更新计数
+                document.getElementById('pn-smokerACount').textContent = this.count.A;
+                document.getElementById('pn-smokerBCount').textContent = this.count.B;
+                document.getElementById('pn-smokerCCount').textContent = this.count.C;
+                
+                // 更新代理状态
+                if (this.agentState === 'running') {
+                    document.getElementById('pn-agentState').textContent = '投放资源中';
+                    document.getElementById('pn-agentStatusBadge').className = 'px-2 py-1 bg-blue-100 text-primary rounded-full text-xs font-medium';
+                    document.getElementById('pn-agentStatusBadge').textContent = '运行中';
+                } else if (this.isRunning) {
+                    document.getElementById('pn-agentState').textContent = '等待吸烟完成';
+                    document.getElementById('pn-agentStatusBadge').className = 'px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium';
+                    document.getElementById('pn-agentStatusBadge').textContent = '等待中';
+                } else {
+                    document.getElementById('pn-agentState').textContent = '已暂停';
+                    document.getElementById('pn-agentStatusBadge').className = 'px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium';
+                    document.getElementById('pn-agentStatusBadge').textContent = '已暂停';
+                }
+                
+                // 更新吸烟者状态
+                ['A', 'B', 'C'].forEach(id => {
+                    const stateEl = document.getElementById(`pn-smoker${id}State`);
+                    const badgeEl = document.getElementById(`pn-smoker${id}StatusBadge`);
+                    
+                    if (this.smokerStates[id] === 'running') {
+                        stateEl.textContent = '吸烟中...';
+                        badgeEl.className = 'px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium';
+                        badgeEl.textContent = '吸烟中';
+                    } else {
+                        stateEl.textContent = '等待资源';
+                        badgeEl.className = 'px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium';
+                        badgeEl.textContent = '等待';
+                    }
+                });
+            }
+        };
+
+        // -------------------------- 方案3：Petri网抑制弧（无死锁） --------------------------
+        const PT = {
+            isRunning: false,
+            speed: 5,
+            count: { A: 0, B: 0, C: 0 },
+            places: { P1: 0, P2: 0, P3: 0, P4: 1 }, // Petri网库所（P4:代理就绪）
+            timers: { agent: null, smoke: null },
+            
+            // 初始化
+            init() {
+                this.bindEvents();
+                this.updateDOM();
+            },
+            
+            // 绑定事件
+            bindEvents() {
+                // 控制按钮
+                document.getElementById('pt-startBtn').addEventListener('click', () => this.start());
+                document.getElementById('pt-pauseBtn').addEventListener('click', () => this.pause());
+                document.getElementById('pt-resetBtn').addEventListener('click', () => this.reset());
+                
+                // 速度控制
+                document.getElementById('pt-speedControl').addEventListener('input', (e) => {
+                    this.speed = parseInt(e.target.value);
+                    const speedText = this.getSpeedText();
+                    document.getElementById('pt-speedValue').textContent = speedText;
+                    addLog('pt-log-area', `系统：模拟速度调整为${speedText}`, 'system', 'petri');
+                });
+            },
+            
+            // 获取速度文本
+            getSpeedText() {
+                if (this.speed <= 2) return '极慢';
+                if (this.speed <= 4) return '慢速';
+                if (this.speed <= 6) return '中等';
+                if (this.speed <= 8) return '快速';
+                return '极快';
+            },
+            
+            // 开始模拟
+            start() {
+                if (this.isRunning) return;
+                this.isRunning = true;
+                document.getElementById('pt-startBtn').disabled = true;
+                document.getElementById('pt-startBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                document.getElementById('pt-pauseBtn').disabled = false;
+                document.getElementById('pt-pauseBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+                
+                addLog('pt-log-area', '系统：Petri网抑制弧方案模拟开始（无死锁）', 'system', 'petri');
+                const delay = 1000 - (this.speed - 1) * 80;
+                this.timers.agent = setTimeout(() => this.fireTransitionT1(), delay); // 触发T1转换（投放资源）
+                this.updateDOM();
+            },
+            
+            // 暂停模拟
+            pause() {
+                if (!this.isRunning) return;
+                this.isRunning = false;
+                document.getElementById('pt-startBtn').disabled = false;
+                document.getElementById('pt-startBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('pt-pauseBtn').disabled = true;
+                document.getElementById('pt-pauseBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                
+                clearTimeout(this.timers.agent);
+                if (this.timers.smoke) clearTimeout(this.timers.smoke);
+                addLog('pt-log-area', '系统：模拟暂停', 'system', 'petri');
+                this.updateDOM();
+            },
+            
+            // 重置模拟
+            reset() {
+                this.isRunning = false;
+                this.count = { A: 0, B: 0, C: 0 };
+                this.places = { P1: 0, P2: 0, P3: 0, P4: 1 }; // 重置库所标记
+                
+                // 清除定时器和动画
+                clearTimeout(this.timers.agent);
+                if (this.timers.smoke) clearTimeout(this.timers.smoke);
+                const animations = document.querySelectorAll('[data-scheme="pt"]');
+                animations.forEach(el => el.remove());
+                
+                // 重置UI
+                document.getElementById('pt-startBtn').disabled = false;
+                document.getElementById('pt-startBtn').classList.remove('opacity-50', 'cursor-not-allowed');
+                document.getElementById('pt-pauseBtn').disabled = true;
+                document.getElementById('pt-pauseBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                
+                // 重置资源格子
+                ['tobacco', 'paper', 'match'].forEach(r => {
+                    const cell = document.getElementById(`pt-${r}-cell`);
+                    const content = document.getElementById(`pt-${r}-content`);
+                    cell.classList.remove('filled', 'petri-filled');
+                    content.classList.remove('opacity-100');
+                    content.classList.add('opacity-0');
+                });
+                
+                // 重置日志
+                document.getElementById('pt-log-area').innerHTML = `
+                    <div class="log-item log-system fade-in">
+                        <span class="log-time text-gray-400">[系统初始化]</span>
+                        <span>Petri网方案就绪，点击「开始模拟」启动（抑制弧保障无死锁）</span>
+                    </div>
+                `;
+                
+                this.updateDOM();
+                addLog('pt-log-area', '系统：模拟已重置', 'system', 'petri');
+            },
+            
+            // 触发T1转换（代理投放资源，受抑制弧P4→T1控制）
+            fireTransitionT1() {
+                if (!this.isRunning) return;
+                
+                // 抑制弧约束：只有P4有标记时才能触发T1
+                if (this.places.P4 !== 1) {
+                    this.timers.agent = setTimeout(() => this.fireTransitionT1(), 200);
+                    return;
+                }
+                
+                // Petri网转换：P4减少1个标记（代理开始工作）
+                this.places.P4 = 0;
+                addLog('pt-log-area', '代理：触发T1转换（抑制弧约束通过），开始投放资源', 'agent', 'petri');
+                this.updateDOM();
+                
+                // 随机选择两种资源（对应两个库所增加标记）
+                const resources = [
+                    {id: 'P1', type: 'tobacco'},
+                    {id: 'P2', type: 'paper'},
+                    {id: 'P3', type: 'match'}
+                ];
+                const excludeIdx = Math.floor(Math.random() * 3);
+                const putResources = resources.filter((_, idx) => idx !== excludeIdx);
+                
+                // 更新库所标记
+                putResources.forEach(r => this.places[r.id] = 1);
+                
+                // 执行投放动画
+                const animatePromises = putResources.map(r => animateResourceToTable('pt', r.type));
+                Promise.all(animatePromises).then(() => {
+                    const resourceNames = this.getResourceName(putResources.map(r => r.type));
+                    addLog('pt-log-area', `代理：投放资源【${resourceNames}】，P1=${this.places.P1}, P2=${this.places.P2}, P3=${this.places.P3}, P4=${this.places.P4}`, 'agent', 'petri');
+                    
+                    // 触发对应的吸烟转换
+                    this.fireSmokeTransition(putResources);
+                });
+            },
+            
+            // 触发吸烟转换（T2/T3/T4）
+            fireSmokeTransition(putResources) {
+                if (!this.isRunning) return;
+                
+                // 确定对应的吸烟者和转换
+                let smokerId, transitionId;
+                if (putResources.some(r => r.id === 'P2') && putResources.some(r => r.id === 'P3')) {
+                    smokerId = 'A'; // 纸(P2)+火柴(P3) → 吸烟者A
+                    transitionId = 'T2';
+                } else if (putResources.some(r => r.id === 'P1') && putResources.some(r => r.id === 'P3')) {
+                    smokerId = 'B'; // 烟草(P1)+火柴(P3) → 吸烟者B
+                    transitionId = 'T3';
+                } else {
+                    smokerId = 'C'; // 烟草(P1)+纸(P2) → 吸烟者C
+                    transitionId = 'T4';
+                }
+                
+                // 更新吸烟者状态
+                document.getElementById(`pt-smoker${smokerId}State`).textContent = '吸烟中...';
+                document.getElementById(`pt-smoker${smokerId}StatusBadge`).className = 'px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium';
+                document.getElementById(`pt-smoker${smokerId}StatusBadge`).textContent = '吸烟中';
+                
+                addLog('pt-log-area', `吸烟者${smokerId}：触发${transitionId}转换，开始吸烟`, 'smoker', 'petri');
+                
+                // 执行资源动画（桌面→吸烟者）
+                const resourceEls = document.querySelectorAll(`[data-scheme="pt"][data-type="${putResources[0].type}"], [data-scheme="pt"][data-type="${putResources[1].type}"]`);
+                // 为资源添加吸烟者ID属性，用于滚动时定位
+                resourceEls.forEach(el => el.dataset.smoker = smokerId);
+                const animatePromises = Array.from(resourceEls).map(el => animateResourceToSmoker(el, 'pt', smokerId));
+                
+                Promise.all(animatePromises).then(() => {
+                    // Petri网转换：清除资源库所标记
+                    putResources.forEach(r => this.places[r.id] = 0);
+                    
+                    // 模拟吸烟时间
+                    const smokeTime = 2000 - (this.speed - 1) * 150;
+                    this.timers.smoke = setTimeout(() => {
+                        // 吸烟完成，Petri网转换：恢复P4标记（代理就绪）
+                        this.count[smokerId]++;
+                        this.places.P4 = 1;
+                        
+                        // 重置吸烟者状态
+                        document.getElementById(`pt-smoker${smokerId}State`).textContent = '等待资源';
+                        document.getElementById(`pt-smoker${smokerId}StatusBadge`).className = 'px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium';
+                        document.getElementById(`pt-smoker${smokerId}StatusBadge`).textContent = '等待';
+                        
+                        addLog('pt-log-area', `吸烟者${smokerId}：吸烟完成（累计${this.count[smokerId]}次），${transitionId}转换结束，P4恢复为1`, 'smoker', 'petri');
+                        
+                        // 继续下一轮
+                        if (this.isRunning) {
+                            const delay = 1000 - (this.speed - 1) * 80;
+                            this.timers.agent = setTimeout(() => this.fireTransitionT1(), delay);
+                        }
+                        this.updateDOM();
+                    }, smokeTime);
+                });
+            },
+            
+            // 辅助：获取资源名称
+            getResourceName(resources) {
+                return resources.map(r => {
+                    return r === 'tobacco' ? '烟草' : r === 'paper' ? '纸' : '火柴';
+                }).join('+');
+            },
+            
+            // 更新DOM
+            updateDOM() {
+                // 更新库所状态
+                document.getElementById('pt-P1').textContent = this.places.P1;
+                document.getElementById('pt-P2').textContent = this.places.P2;
+                document.getElementById('pt-P3').textContent = this.places.P3;
+                document.getElementById('pt-P4').textContent = this.places.P4;
+                
+                // 更新计数
+                document.getElementById('pt-smokerACount').textContent = this.count.A;
+                document.getElementById('pt-smokerBCount').textContent = this.count.B;
+                document.getElementById('pt-smokerCCount').textContent = this.count.C;
+                
+                // 更新代理状态
+                if (this.isRunning) {
+                    if (this.places.P4 === 1) {
+                        document.getElementById('pt-agentState').textContent = '等待投放资源';
+                        document.getElementById('pt-agentStatusBadge').className = 'px-2 py-1 bg-purple-100 text-petri rounded-full text-xs font-medium';
+                        document.getElementById('pt-agentStatusBadge').textContent = '就绪';
+                    } else {
+                        document.getElementById('pt-agentState').textContent = '投放资源后等待';
+                        document.getElementById('pt-agentStatusBadge').className = 'px-2 py-1 bg-purple-100 text-petri rounded-full text-xs font-medium';
+                        document.getElementById('pt-agentStatusBadge').textContent = '运行中';
+                    }
+                } else {
+                    document.getElementById('pt-agentState').textContent = '已暂停';
+                    document.getElementById('pt-agentStatusBadge').className = 'px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium';
+                    document.getElementById('pt-agentStatusBadge').textContent = '已暂停';
+                }
+            }
+        };
+
+        // -------------------------- 选项卡切换逻辑 --------------------------
+        function setupTabs() {
+            const tabs = {
+                deadlock: { tab: document.getElementById('tab-deadlock'), content: document.getElementById('scheme-deadlock') },
+                parnas: { tab: document.getElementById('tab-parnas'), content: document.getElementById('scheme-parnas') },
+                petri: { tab: document.getElementById('tab-petri'), content: document.getElementById('scheme-petri') }
+            };
+            
+            // 清除所有活动状态并暂停当前方案
+            function clearActive() {
+                // 暂停所有运行中的方案
+                if (DL.isRunning) DL.pause();
+                if (PN.isRunning) PN.pause();
+                if (PT.isRunning) PT.pause();
+                
+                // 清除UI活动状态
+                Object.values(tabs).forEach(item => {
+                    item.tab.classList.remove('tab-active', 'tab-deadlock-active', 'tab-petri-active');
+                    item.content.classList.add('hidden');
+                });
+                
+                // 清除所有资源动画
+                const animations = document.querySelectorAll('.resource-item');
+                animations.forEach(el => el.remove());
             }
             
-            logContainer.appendChild(logEntry);
-            logContainer.scrollTop = logContainer.scrollHeight; // 自动滚动到底部
+            // 绑定选项卡事件
+            tabs.deadlock.tab.addEventListener('click', () => {
+                clearActive();
+                tabs.deadlock.tab.classList.add('tab-deadlock-active');
+                tabs.deadlock.content.classList.remove('hidden');
+                DL.updateDOM(); // 确保UI状态正确
+            });
+            
+            tabs.parnas.tab.addEventListener('click', () => {
+                clearActive();
+                tabs.parnas.tab.classList.add('tab-active');
+                tabs.parnas.content.classList.remove('hidden');
+                PN.updateDOM(); // 确保UI状态正确
+            });
+            
+            tabs.petri.tab.addEventListener('click', () => {
+                clearActive();
+                tabs.petri.tab.classList.add('tab-petri-active');
+                tabs.petri.content.classList.remove('hidden');
+                PT.updateDOM(); // 确保UI状态正确
+            });
         }
-        
-        // 初始化
-        function init() {
-            initEventListeners();
-        }
-        
-        // 启动应用
-        window.addEventListener('DOMContentLoaded', init);
+
+        // -------------------------- 初始化所有方案 --------------------------
+        window.addEventListener('DOMContentLoaded', () => {
+            setupTabs();
+            setupScrollHandler(); // 初始化滚动处理
+            DL.init();
+            PN.init();
+            PT.init();
+        });
     </script>
 </body>
 </html>
