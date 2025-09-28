@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建目录 - WEB笔记系统</title>
+    <!-- 引入Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 基础样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 导航栏样式 */
+        .header {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+            margin-right: 20px;
+        }
+        
+        .nav ul {
+            display: flex;
+            list-style: none;
+            flex-wrap: wrap;
+        }
+        
+        .nav ul li {
+            margin: 0 10px;
+        }
+        
+        .nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 8px 12px;
+            border-radius: 4px;
+        }
+        
+        .nav ul li a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .search-box {
+            display: flex;
+            background: white;
+            border-radius: 30px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .search-box input {
+            border: none;
+            padding: 10px 15px;
+            outline: none;
+            width: 200px;
+        }
+        
+        .search-box button {
+            border: none;
+            background: #ff6b6b;
+            color: white;
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .search-box button:hover {
+            background: #ee5a5a;
+        }
+        
+        /* 创建目录页面特定样式 */
+        .create-directory-header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .create-directory-title {
+            color: #2c3e50;
+            font-size: 32px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* 表单样式 */
+        .directory-form {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .form-group {
+            margin-bottom: 30px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 16px;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        /* 目录级别选择 */
+        .directory-level-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .level-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 25px;
+            border-left: 4px solid #3498db;
+            transition: all 0.3s ease;
+        }
+        
+        .level-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .level-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .level-card select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+        }
+        
+        /* 目录名称输入 */
+        .directory-name-input {
+            background: linear-gradient(135deg, #fff9e6 0%, #ffeaa7 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            border: 2px dashed #fdcb6e;
+        }
+        
+        .directory-name-input h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* 目录预览 */
+        .directory-preview {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            border: 2px solid #90caf9;
+        }
+        
+        .directory-preview h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .preview-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            min-height: 100px;
+            border: 1px solid #e3f2fd;
+        }
+        
+        .preview-path {
+            font-family: 'Courier New', monospace;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        /* 表单操作按钮 */
+        .form-actions {
+            display: flex;
+            gap: 20px;
+            justify-content: flex-end;
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 3px solid #f1f1f1;
+        }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            border: none;
+            padding: 18px 35px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(46, 204, 113, 0.4);
+        }
+        
+        .reset-btn {
+            background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+            color: white;
+            border: none;
+            padding: 18px 35px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .reset-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(149, 165, 166, 0.3);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 1200px) {
+            .container {
+                max-width: 100%;
+                padding: 0 15px;
+            }
+            
+            .directory-level-selector {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header .container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .nav ul {
+                margin: 15px 0;
+                justify-content: center;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+            
+            .search-box input {
+                width: 100%;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+            }
+            
+            .submit-btn,
+            .reset-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .create-directory-title {
+                font-size: 26px;
+            }
+            
+            .directory-form {
+                padding: 20px;
+            }
+            
+            .level-card {
+                padding: 20px;
+            }
+        }
+        
+        /* 状态消息 */
+        .status-message {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- 导航栏 -->
+    <header class="header">
+        <div class="container">
+            <a href="/" class="logo">WEB笔记系统</a>
+
+            <nav class="nav">
+                <ul>
+                    <li><a href="/">首页</a></li>
+                    <li><a href="creat-note/index">创建笔记</a></li>
+                    <li><a href="/create-article">创建文章</a></li>
+                    <li><a href="/create-directory" class="active">创建目录</a></li>
+                    <li><a href="/files">文件共享</a></li>
+                </ul>
+            </nav>
+
+            <div class="search-box">
+                <input type="text" placeholder="搜索目录..." id="directorySearch">
+                <button><i class="fas fa-search"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- 创建目录内容区 -->
+    <div class="container">
+        <div class="create-directory-header">
+            <h1 class="create-directory-title">
+                <i class="fas fa-folder-plus"></i> 创建新目录
+            </h1>
+            <p>建立清晰的知识分类体系，方便管理您的笔记</p>
+        </div>
+
+        <form class="directory-form" id="createDirectoryForm">
+            <!-- 状态消息 -->
+            <div id="statusMessage" class="status-message"></div>
+
+            <!-- 目录级别选择 -->
+            <div class="form-group">
+                <label><i class="fas fa-layer-group"></i> 目录级别</label>
+                <div class="directory-level-selector">
+                    <div class="level-card">
+                        <h3><i class="fas fa-1"></i> 一级目录</h3>
+                        <select id="directoryLevel" required>
+                            <option value="">选择目录级别</option>
+                            <option value="1">一级目录 (顶级分类)</option>
+                            <option value="2">二级目录 (子分类)</option>
+                            <option value="3">三级目录 (具体分类)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 父目录选择（二级和三级目录需要） -->
+            <div class="form-group" id="parentDirectoryGroup" style="display: none;">
+                <label><i class="fas fa-level-up-alt"></i> 父级目录</label>
+                <div class="directory-level-selector">
+                    <div class="level-card">
+                        <h3><i class="fas fa-folder-open"></i> 选择父目录</h3>
+                        <select id="parentLevel1" style="display: none;">
+                            <option value="">选择一级目录</option>
+                        </select>
+                        <select id="parentLevel2" style="display: none;">
+                            <option value="">选择二级目录</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 目录名称输入 -->
+            <div class="directory-name-input">
+                <h3><i class="fas fa-signature"></i> 目录名称</h3>
+                <input type="text" id="directoryName" placeholder="请输入目录名称..." required maxlength="50">
+                <p style="margin-top: 10px; color: #7f8c8d; font-size: 14px;">
+                    <i class="fas fa-info-circle"></i> 目录名称应该简洁明了，便于识别和分类
+                </p>
+            </div>
+
+            <!-- 目录描述 -->
+            <div class="form-group">
+                <label for="directoryDescription"><i class="fas fa-align-left"></i> 目录描述</label>
+                <textarea id="directoryDescription" placeholder="请输入目录的详细描述..." rows="4"></textarea>
+            </div>
+
+            <!-- 目录预览 -->
+            <div class="directory-preview">
+                <h3><i class="fas fa-eye"></i> 目录路径预览</h3>
+                <div class="preview-content">
+                    <div id="directoryPreview" class="preview-path">
+                        请选择目录级别和名称以查看预览...
+                    </div>
+                </div>
+            </div>
+
+            <!-- 表单操作按钮 -->
+            <div class="form-actions">
+                <button type="button" class="reset-btn" id="resetFormBtn">
+                    <i class="fas fa-redo"></i> 重置表单
+                </button>
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <i class="fas fa-save"></i> 创建目录
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const form = document.getElementById('createDirectoryForm');
+            const levelSelect = document.getElementById('directoryLevel');
+            const parentGroup = document.getElementById('parentDirectoryGroup');
+            const parentLevel1 = document.getElementById('parentLevel1');
+            const parentLevel2 = document.getElementById('parentLevel2');
+            const directoryName = document.getElementById('directoryName');
+            const directoryPreview = document.getElementById('directoryPreview');
+            const statusMessage = document.getElementById('statusMessage');
+            const submitBtn = document.getElementById('submitBtn');
+
+            let directoryData = {
+                level1: [],
+                level2: []
+            };
+
+            // 初始化函数
+            async function init() {
+                await loadDirectoryData();
+                setupEventListeners();
+                updatePreview();
+            }
+
+            // 加载目录数据
+            async function loadDirectoryData() {
+                try {
+                    const response = await fetch('/creat-note/newmulu', {
+                        method: 'GET'
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        directoryData = data;
+                        populateParentSelects();
+                    }
+                } catch (error) {
+                    console.error('加载目录数据失败:', error);
+                }
+            }
+
+            // 填充父目录选择框
+            function populateParentSelects() {
+                // 填充一级目录
+                parentLevel1.innerHTML = '<option value="">选择一级目录</option>';
+                directoryData.level1.forEach(dir => {
+                    const option = document.createElement('option');
+                    option.value = dir.id || dir.name;
+                    option.textContent = dir.name;
+                    parentLevel1.appendChild(option);
+                });
+
+                // 填充二级目录
+                parentLevel2.innerHTML = '<option value="">选择二级目录</option>';
+                directoryData.level2.forEach(dir => {
+                    const option = document.createElement('option');
+                    option.value = dir.id || dir.name;
+                    option.textContent = `${dir.name}`;
+                    parentLevel2.appendChild(option);
+                });
+            }
+
+            // 设置事件监听器
+            function setupEventListeners() {
+                // 目录级别变化
+                levelSelect.addEventListener('change', function() {
+                    const level = parseInt(this.value);
+                    updateParentVisibility(level);
+                    updatePreview();
+                });
+
+                // 父目录变化
+                parentLevel1.addEventListener('change', updatePreview);
+                parentLevel2.addEventListener('change', updatePreview);
+
+                // 目录名称输入
+                directoryName.addEventListener('input', updatePreview);
+
+                // 表单提交
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    submitForm();
+                });
+
+                // 重置表单
+                document.getElementById('resetFormBtn').addEventListener('click', function() {
+                    if (confirm('确定要重置表单吗？所有输入的内容将会丢失。')) {
+                        resetForm();
+                    }
+                });
+
+                // 搜索功能
+                const searchButton = document.querySelector('.search-box button');
+                const searchInput = document.getElementById('directorySearch');
+                
+                searchButton.addEventListener('click', performSearch);
+                searchInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        performSearch();
+                    }
+                });
+            }
+
+            // 更新父目录可见性
+            function updateParentVisibility(level) {
+                if (level === 1) {
+                    parentGroup.style.display = 'none';
+                    parentLevel1.style.display = 'none';
+                    parentLevel2.style.display = 'none';
+                } else if (level === 2) {
+                    parentGroup.style.display = 'block';
+                    parentLevel1.style.display = 'block';
+                    parentLevel2.style.display = 'none';
+                } else if (level === 3) {
+                    parentGroup.style.display = 'block';
+                    parentLevel1.style.display = 'none';
+                    parentLevel2.style.display = 'block';
+                }
+            }
+
+            // 更新目录预览
+            function updatePreview() {
+                const level = parseInt(levelSelect.value);
+                const name = directoryName.value.trim();
+                
+                if (!level || !name) {
+                    directoryPreview.textContent = '请选择目录级别和名称以查看预览...';
+                    return;
+                }
+
+                let preview = '';
+                if (level === 1) {
+                    preview = name;
+                } else if (level === 2) {
+                    const parent = parentLevel1.options[parentLevel1.selectedIndex]?.text || '未选择';
+                    preview = `${parent} / ${name}`;
+                } else if (level === 3) {
+                    const parent = parentLevel2.options[parentLevel2.selectedIndex]?.text || '未选择';
+                    preview = `${parent} / ${name}`;
+                }
+
+                directoryPreview.textContent = preview;
+            }
+
+            // 提交表单
+            async function submitForm() {
+                const level = parseInt(levelSelect.value);
+                const name = directoryName.value.trim();
+                const description = document.getElementById('directoryDescription').value.trim();
+				const directory=parentLevel1.value.trim()||parentLevel2.value.trim()||"无"
+
+                if (!level || !name) {
+                    showStatus('请填写完整的目录信息', 'error');
+                    return;
+                }
+
+                const formData = {
+                    level: level.toString(),
+                    name: name,
+					directory:directory,
+                    description: description
+                };
+
+                setLoading(true);
+                try {
+                    const response = await fetch('/create-directory', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+
+                    if (response.ok) {
+                        showStatus('目录创建成功！', 'success');
+						alert('目录创建成功');
+                        resetForm();
+                        // 重新加载目录数据
+                        await loadDirectoryData();
+                    } else {
+                        showStatus( '创建目录失败', 'error');
+                    }
+                } catch (error) {
+                    console.error('创建目录错误:', error);
+                    showStatus('网络错误，请重试', 'error');
+                } finally {
+                    setLoading(false);
+                }
+            }
+
+            // 显示状态消息
+            function showStatus(message, type) {
+                statusMessage.textContent = message;
+                statusMessage.className = `status-message status-${type}`;
+                statusMessage.style.display = 'block';
+
+                // 3秒后自动隐藏
+                setTimeout(() => {
+                    statusMessage.style.display = 'none';
+                }, 3000);
+            }
+
+            // 设置加载状态
+            function setLoading(loading) {
+                if (loading) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<div class="loading"></div> 创建中...';
+                } else {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-save"></i> 创建目录';
+                }
+            }
+
+            // 重置表单
+            function resetForm() {
+                form.reset();
+                parentGroup.style.display = 'none';
+                parentLevel1.style.display = 'none';
+                parentLevel2.style.display = 'none';
+                updatePreview();
+                statusMessage.style.display = 'none';
+            }
+
+            // 搜索功能
+            function performSearch() {
+                const query = document.getElementById('directorySearch').value.trim();
+                if (query) {
+                    alert(`搜索目录: ${query}`);
+                    // 实际应用中这里应该执行搜索操作
+                }
+            }
+
+            // 初始化应用
+            init();
+        });
+    </script>
+</body>
+</html>
