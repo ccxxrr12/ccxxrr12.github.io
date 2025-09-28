@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geek Profile Card</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#61AFEF',
+                        secondary: '#98C379',
+                        accent: '#C678DD',
+                        warning: '#E5C07B',
+                        error: '#E06C75',
+                        dark: '#282C34',
+                        darker: '#1E2127',
+                        editor: '#21252B',
+                        comment: '#5C6370',
+                        keyword: '#C678DD',
+                        string: '#98C379',
+                        number: '#D19A66',
+                        variable: '#E06C75',
+                        function: '#61AFEF',
+                    },
+                    fontFamily: {
+                        code: ['Fira Code', 'Consolas', 'Monaco', 'monospace'],
+                    },
+                    animation: {
+                        'typing': 'typing 3.5s steps(40, end)',
+                        'blink': 'blink .7s infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        typing: {
+                            'from': { width: '0' },
+                            'to': { width: '100%' },
+                        },
+                        blink: {
+                            'from, to': { borderColor: 'transparent' },
+                            '50%': { borderColor: '#5C6370' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
+                    }
+                },
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .text-shadow {
+                text-shadow: 0 0 10px rgba(97, 175, 239, 0.5);
+            }
+            .bg-glass {
+                background: rgba(30, 33, 39, 0.8);
+                backdrop-filter: blur(10px);
+            }
+            .typing-container {
+                display: inline-block;
+            }
+            .cursor {
+                border-right: 0.15em solid #5C6370;
+                animation: blink 0.7s infinite;
+            }
+            /* .tag-active and .tag-inactive are now handled with utility classes in the HTML directly */
+        }
+    </style>
+</head>
+<body class="bg-darker min-h-screen flex items-center justify-center p-4 font-code text-gray-200">
+    <!-- Floating background elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute top-[10%] left-[5%] w-64 h-64 bg-primary/10 rounded-full filter blur-3xl animate-float" style="animation-delay: 0s;"></div>
+        <div class="absolute top-[30%] right-[10%] w-80 h-80 bg-accent/10 rounded-full filter blur-3xl animate-float" style="animation-delay: 2s;"></div>
+        <div class="absolute bottom-[20%] left-[20%] w-72 h-72 bg-secondary/10 rounded-full filter blur-3xl animate-float" style="animation-delay: 4s;"></div>
+    </div>
+
+    <!-- Card Container -->
+    <div class="w-full max-w-4xl relative z-10">
+        <!-- Editor Window -->
+        <div class="bg-glass rounded-lg shadow-2xl overflow-hidden border border-gray-700/50">
+            <!-- Window Controls -->
+            <div class="flex items-center justify-between bg-darker px-4 py-2 border-b border-gray-700/50">
+                <div class="flex space-x-2">
+                    <div class="w-3 h-3 rounded-full bg-error"></div>
+                    <div class="w-3 h-3 rounded-full bg-warning"></div>
+                    <div class="w-3 h-3 rounded-full bg-secondary"></div>
+                </div>
+                <div class="text-xs text-gray-400">geek-profile-card.js</div>
+                <div class="flex space-x-1">
+                    <div class="w-6 h-6 flex items-center justify-center text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 rounded transition-colors">
+                        <i class="fa fa-window-minimize"></i>
+                    </div>
+                    <div class="w-6 h-6 flex items-center justify-center text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 rounded transition-colors">
+                        <i class="fa fa-window-maximize"></i>
+                    </div>
+                    <div class="w-6 h-6 flex items-center justify-center text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 rounded transition-colors">
+                        <i class="fa fa-times"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex border-b border-gray-700/50">
+                <div class="px-4 py-2 tag-active text-sm">
+                    <i class="fa fa-file-code-o mr-1"></i>geek-profile-card.js
+                </div>
+                <div class="px-4 py-2 tag-inactive text-sm">
+                    <i class="fa fa-file-text-o mr-1"></i>README.md
+                <div class="px-4 py-2 bg-editor text-white border-b-2 border-primary text-sm">
+                    <i class="fa fa-file-code-o mr-1"></i>geek-profile-card.js
+                </div>
+                <div class="px-4 py-2 bg-darker/70 text-comment hover:text-white transition-all duration-200 text-sm">
+                    <i class="fa fa-file-text-o mr-1"></i>README.md
+                </div>
+                <div class="px-4 py-2 bg-darker/70 text-comment hover:text-white transition-all duration-200 text-sm">
+                    <i class="fa fa-cog mr-1"></i>config.json
+                </div>
+ * Profile Card Configuration
+ * 
+ * This module exports a JavaScript object containing personal information
+ * formatted as a developer profile. All sensitive information is encrypted
+ * and should be accessed via the provided methods.
+ */</span>
+
+<span class="text-keyword">const</span> <span class="text-variable">ProfileCard</span> = {
+  <span class="text-keyword">name</span>: <span class="text-string">'Sherry CHEN'</span>,
+  <span class="text-keyword">role</span>: <span class="text-string">'Senior Software Engineer'</span>,
+  <span class="text-keyword">specialization</span>: <span class="text-string">'Full Stack Development'</span>,
+  <span class="text-keyword">location</span>: <span class="text-string">'San Francisco, CA'</span>,
+  <span class="text-keyword">company</span>: <span class="text-string">'TechGiant Inc.'</span>,
+  
+  <span class="text-keyword">skills</span>: [
+    <span class="text-string">'JavaScript'</span>, <span class="text-string">'TypeScript'</span>, <span class="text-string">'React'</span>, <span class="text-string">'Node.js'</span>,
+    <span class="text-string">'AWS'</span>, <span class="text-string">'Docker'</span>, <span class="text-string">'Kubernetes'</span>, <span class="text-string">'PostgreSQL'</span>
+  ],
+  
+  <span class="text-keyword">languages</span>: [
+    <span class="text-string">'English'</span>, <span class="text-string">'Spanish'</span>, <span class="text-string">'Japanese'</span>
+  ],
+  
+  <span class="text-keyword">contact</span>: {
+    <span class="text-comment">// Encrypted email - call getEmail() to decrypt</span>
+    <span class="text-keyword">email</span>: <span class="text-string">'aW5mb0BhbGV4am9obnNvbi5jb20='</span>,
+    
+    <span class="text-comment">// Encrypted phone - call getPhone() to decrypt</span>
+    <span class="text-keyword">phone</span>: <span class="text-string">'NTMwLTEyMy00NTY3'</span>,
+    
+    <span class="text-comment">// Social media profiles</span>
+    <span class="text-keyword">social</span>: {
+      <span class="text-string">'linkedin'</span>: <span class="text-string">'SherryCHEN'</span>,
+      <span class="text-string">'github'</span>: <span class="text-string">'Sherryj-dev'</span>,
+      <span class="text-string">'twitter'</span>: <span class="text-string">'@Sherryj_code'</span>,
+      <span class="text-string">'dribbble'</span>: <span class="text-string">'Sherry_designs'</span>
+    }
+  },
+  
+  <span class="text-comment">/**
+   * Get decrypted email address
+   * @returns {string} Decrypted email
+   */</span>
+  <span class="text-function">getEmail</span>() {
+    <span class="text-keyword">return</span> <span class="text-variable">atob</span>(<span class="text-keyword">this</span>.contact.email);
+  },
+  
+  <span class="text-comment">/**
+   * Get decrypted phone number
+   * @returns {string} Decrypted phone number
+   */</span>
+  <span class="text-function">getPhone</span>() {
+    <span class="text-keyword">return</span> <span class="text-variable">atob</span>(<span class="text-keyword">this</span>.contact.phone);
+  },
+  
+  <span class="text-comment">/**
+   * Get social media profile URL
+   * @param {string} platform - Social media platform
+   * @returns {string} Profile URL
+   */</span>
+  <span class="text-function">getSocialProfile</span>(<span class="text-variable">platform</span>) {
+    <span class="text-keyword">const</span> <span class="text-variable">platforms</span> = {
+      <span class="text-string">'linkedin'</span>: <span class="text-string">'https://linkedin.com/in/'</span>,
+      <span class="text-string">'github'</span>: <span class="text-string">'https://github.com/'</span>,
+      <span class="text-string">'twitter'</span>: <span class="text-string">'https://twitter.com/'</span>,
+      <span class="text-string">'dribbble'</span>: <span class="text-string">'https://dribbble.com/'</span>
+    };
+    
+    <span class="text-keyword">if</span> (<span class="text-variable">platforms</span>[<span class="text-variable">platform</span>]) {
+      <span class="text-keyword">return</span> <span class="text-variable">platforms</span>[<span class="text-variable">platform</span>] + <span class="text-keyword">this</span>.contact.social[<span class="text-variable">platform</span>];
+    }
+    
+    <span class="text-keyword">return</span> <span class="text-literal">null</span>;
+  },
+  
+  <span class="text-comment">/**
+   * Render contact section with animated typing effect
+   * @param {HTMLElement} target - Target element to render into
+   */</span>
+  <span class="text-function">renderContactInfo</span>(<span class="text-variable">target</span>) {
+    <span class="text-comment">// Implementation hidden for security reasons</span>
+    <span class="text-comment">// This would normally generate the contact section with animations</span>
+  }
+};
+
+<span class="text-comment">// Initialize and render contact information</span>
+<span class="text-variable">document</span>.readyState === <span class="text-string">'loading'</span> 
+  ? <span class="text-variable">document</span>.addEventListener(<span class="text-string">'DOMContentLoaded'</span>, () => <span class="text-variable">ProfileCard</span>.renderContactInfo(<span class="text-variable">document</span>.getElementById(<span class="text-string">'contact-info'</span>)))
+  : <span class="text-variable">ProfileCard</span>.renderContactInfo(<span class="text-variable">document</span>.getElementById(<span class="text-string">'contact-info'</span>));
+
+<span class="text-comment">// Export the profile for external use</span>
+<span class="text-keyword">export</span> <span class="text-keyword">default</span> <span class="text-variable">ProfileCard</span>;</pre>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="bg-darker py-1 px-4 text-xs text-gray-400 flex justify-between items-center border-t border-gray-700/50">
+                <div class="flex items-center space-x-3">
+                    <div class="flex items-center">
+                        <i class="fa fa-git-branch mr-1"></i>
+                        <span>main</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fa fa-code-fork mr-1"></i>
+                        <span>v2.3.1</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="flex items-center">
+                        <i class="fa fa-check-circle text-secondary mr-1"></i>
+                        <span>128 lines</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fa fa-file-code-o mr-1"></i>
+                        <span>JavaScript</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Info Overlay -->
+        <div id="contact-info" class="mt-6 bg-glass rounded-lg p-6 shadow-lg border border-gray-700/50 hidden">
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="flex-shrink-0">
+                    <div class="w-32 h-32 md:w-40 md:h-40 rounded-lg bg-primary/20 border-2 border-primary/50 overflow-hidden flex items-center justify-center">
+                        <div class="text-5xl text-primary">
+                            <i class="fa fa-user-circle-o"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex-grow">
+                    <h2 class="text-2xl font-bold text-primary mb-1">Sherry CHEN</h2>
+                    <p class="text-lg text-gray-300 mb-3">Senior Software Engineer @ TechGiant Inc.</p>
+                    
+                    <div class="space-y-2 mb-4">
+                        <div class="flex items-center text-gray-300">
+                            <i class="fa fa-envelope-o text-primary w-6"></i>
+                            <a href="mailto:info@SherryCHEN.com" class="hover:text-primary transition-colors">info@SherryCHEN.com</a>
+                        </div>
+                        <div class="flex items-center text-gray-300">
+                            <i class="fa fa-phone text-primary w-6"></i>
+                            <a href="tel:530-123-4567" class="hover:text-primary transition-colors">530-123-4567</a>
+                        </div>
+                        <div class="flex items-center text-gray-300">
+                            <i class="fa fa-map-marker text-primary w-6"></i>
+                            <span>San Francisco, CA</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <a href="https://linkedin.com/in/SherryCHEN" target="_blank" class="w-8 h-8 rounded-full bg-darker flex items-center justify-center text-gray-400 hover:text-primary hover:bg-dark transition-colors">
+                            <i class="fa fa-linkedin"></i>
+                        </a>
+                        <a href="https://github.com/Sherryj-dev" target="_blank" class="w-8 h-8 rounded-full bg-darker flex items-center justify-center text-gray-400 hover:text-primary hover:bg-dark transition-colors">
+                            <i class="fa fa-github"></i>
+                        </a>
+                        <a href="https://twitter.com/Sherryj_code" target="_blank" class="w-8 h-8 rounded-full bg-darker flex items-center justify-center text-gray-400 hover:text-primary hover:bg-dark transition-colors">
+                            <i class="fa fa-twitter"></i>
+                        </a>
+                        <a href="https://dribbble.com/Sherry_designs" target="_blank" class="w-8 h-8 rounded-full bg-darker flex items-center justify-center text-gray-400 hover:text-primary hover:bg-dark transition-colors">
+                            <i class="fa fa-dribbble"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-4 border-t border-gray-700/50">
+                <h3 class="text-lg font-semibold text-gray-300 mb-2">Skills & Expertise</h3>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-3 py-1 bg-dark rounded-full text-xs text-gray-300 border border-gray-700/50">JavaScript</span>
+                    <span class="px-3 py-1 bg-dark rounded-full text-xs text-gray-300 border border-gray-700/50">TypeScript</span>
+                    <span class="px-3 py-1 bg-dark rounded-full text-xs text-gray-300 border border-gray-700/50">React</span>
+                    <span class="px-3 py-1 bg-dark rounded-full text-xs text-gray-300 border border-gray-700/50">Node.js</span>
+                    <span class="px-3 py-1 bg-dark rounded-full text-xs text-gray-300 border border-gray-700/50">AWS</span>
+                    <span class="px-3 py-1 bg-dark rounded-full text-xs text-gray-300 border border-gray-700/50">Docker</span>
+                    <span class="px-3 py-1 bg-dark rounded-full text-xs text-gray-300 border border-gray-700/50">Kubernetes</span>
+                    <span class="px-3 py-1 bg-dark rounded-full text-xs text-gray-300 border border-gray-700/50">PostgreSQL</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulate typing animation for the code
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show contact info after a delay
+            setTimeout(() => {
+                const contactInfo = document.getElementById('contact-info');
+                contactInfo.classList.remove('hidden');
+                contactInfo.classList.add('animate-fadeIn');
+            }, 3000);
+            
+            // Tab switching functionality
+            const tabs = document.querySelectorAll('.tag-inactive');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // Remove active class from all tabs
+                    document.querySelectorAll('.tag-active, .tag-inactive').forEach(t => {
+                        t.classList.remove('tag-active');
+                        t.classList.add('tag-inactive');
+                    });
+                    
+                    // Add active class to clicked tab
+                    this.classList.remove('tag-inactive');
+                    this.classList.add('tag-active');
+                    
+                    // Here you would normally switch content based on the tab
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+    
